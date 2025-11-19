@@ -60,6 +60,70 @@ const products: Product[] = [
     image: '💪',
     category: 'Bars',
   },
+  {
+    id: 7,
+    name: 'Pommel Horse',
+    price: 2299.99,
+    description: 'Professional pommel horse with adjustable height and durable construction.',
+    image: '🐴',
+    category: 'Apparatus',
+  },
+  {
+    id: 8,
+    name: 'Still Rings Set',
+    price: 899.99,
+    description: 'Competition-grade still rings with adjustable height and secure mounting system.',
+    image: '⭕',
+    category: 'Rings',
+  },
+  {
+    id: 9,
+    name: 'Spring Floor System',
+    price: 4999.99,
+    description: 'Professional spring floor system for tumbling and floor exercise routines.',
+    image: '🌊',
+    category: 'Floors',
+  },
+  {
+    id: 10,
+    name: 'Junior Training Beam',
+    price: 299.99,
+    description: 'Low height balance beam perfect for beginners and young gymnasts.',
+    image: '📏',
+    category: 'Beams',
+  },
+  {
+    id: 11,
+    name: 'Tumbling Track',
+    price: 3499.99,
+    description: 'Long tumbling track with superior bounce for dynamic acrobatic moves.',
+    image: '🏃',
+    category: 'Floors',
+  },
+  {
+    id: 12,
+    name: 'Crash Mat XL',
+    price: 599.99,
+    description: 'Extra-large crash mat for safe landings during training and skill progression.',
+    image: '🛡️',
+    category: 'Mats',
+  },
+  {
+    id: 13,
+    name: 'Wall Bars System',
+    price: 799.99,
+    description: 'Versatile wall-mounted bars for flexibility training and conditioning.',
+    image: '🧗',
+    category: 'Apparatus',
+  },
+  {
+    id: 14,
+    name: 'Rhythmic Gymnastics Hoop',
+    price: 49.99,
+    description: 'Professional rhythmic gymnastics hoop with balanced weight distribution.',
+    image: '⭕',
+    category: 'Rhythmic',
+  },
 ];
 
 export default function ProductCatalog() {
@@ -78,11 +142,11 @@ export default function ProductCatalog() {
   };
 
   return (
-    <section id="products" className="py-20 bg-gray-50">
+    <section id="products" className="py-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Products</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold text-white mb-4">Our Products</h2>
+          <p className="text-xl text-purple-200 max-w-3xl mx-auto">
             Discover our premium range of gymnastics equipment designed for athletes of all levels
           </p>
         </div>
@@ -95,8 +159,8 @@ export default function ProductCatalog() {
               onClick={() => setSelectedCategory(category)}
               className={`px-6 py-2 rounded-full transition ${
                 selectedCategory === category
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  ? 'purple-gradient text-white'
+                  : 'glass text-purple-200 hover:bg-white/20'
               }`}
             >
               {category}
@@ -109,22 +173,22 @@ export default function ProductCatalog() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              className="glass-card rounded-2xl overflow-hidden hover:scale-105 transition-transform shader-effect"
             >
-              <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-8xl">
+              <div className="h-48 purple-gradient-soft flex items-center justify-center text-8xl">
                 {product.image}
               </div>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
-                  <span className="text-sm text-blue-600 font-semibold">{product.category}</span>
+                  <h3 className="text-xl font-bold text-white">{product.name}</h3>
+                  <span className="text-sm text-purple-400 font-semibold">{product.category}</span>
                 </div>
-                <p className="text-gray-600 mb-4">{product.description}</p>
+                <p className="text-purple-200 mb-4">{product.description}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">${product.price}</span>
+                  <span className="text-2xl font-bold gradient-text">${product.price}</span>
                   <button
                     onClick={() => addToCart(product)}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
+                    className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
                   >
                     Add to Cart
                   </button>
@@ -136,10 +200,10 @@ export default function ProductCatalog() {
 
         {/* Cart Summary */}
         {cart.length > 0 && (
-          <div className="mt-12 bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
-            <p className="text-lg text-gray-700">
+          <div className="mt-12 glass-card rounded-2xl p-6 text-center">
+            <p className="text-lg text-white">
               <span className="font-bold">{cart.length}</span> item(s) in cart - Total: ${' '}
-              <span className="font-bold text-blue-600">
+              <span className="font-bold gradient-text">
                 {cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
               </span>
             </p>
