@@ -78,11 +78,11 @@ export default function ProductCatalog() {
   };
 
   return (
-    <section id="products" className="py-20 bg-gray-50">
+    <section id="products" className="py-20" style={{ backgroundColor: 'var(--secondary)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Products</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h2 className="text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Our Products</h2>
+          <p className="text-xl max-w-3xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
             Discover our premium range of gymnastics equipment designed for athletes of all levels
           </p>
         </div>
@@ -93,11 +93,11 @@ export default function ProductCatalog() {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-2 rounded-full transition ${
-                selectedCategory === category
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`px-6 py-2 rounded-full transition`}
+              style={{
+                backgroundColor: selectedCategory === category ? 'var(--primary)' : 'var(--card-bg)',
+                color: selectedCategory === category ? 'white' : 'var(--text-secondary)',
+              }}
             >
               {category}
             </button>
@@ -109,22 +109,29 @@ export default function ProductCatalog() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              className="rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              style={{ backgroundColor: 'var(--card-bg)' }}
             >
-              <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-8xl">
+              <div className="h-48 flex items-center justify-center text-8xl" style={{
+                background: `linear-gradient(to bottom right, var(--hero-gradient-from), var(--hero-gradient-to))`
+              }}>
                 {product.image}
               </div>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
-                  <span className="text-sm text-blue-600 font-semibold">{product.category}</span>
+                  <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{product.name}</h3>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--primary)' }}>{product.category}</span>
                 </div>
-                <p className="text-gray-600 mb-4">{product.description}</p>
+                <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>{product.description}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">${product.price}</span>
+                  <span className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>${product.price}</span>
                   <button
                     onClick={() => addToCart(product)}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
+                    className="px-6 py-2 rounded-full transition"
+                    style={{ 
+                      backgroundColor: 'var(--primary)', 
+                      color: 'white' 
+                    }}
                   >
                     Add to Cart
                   </button>
@@ -136,10 +143,13 @@ export default function ProductCatalog() {
 
         {/* Cart Summary */}
         {cart.length > 0 && (
-          <div className="mt-12 bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
-            <p className="text-lg text-gray-700">
+          <div className="mt-12 border-2 rounded-lg p-6 text-center" style={{
+            backgroundColor: 'var(--secondary)',
+            borderColor: 'var(--card-border)'
+          }}>
+            <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
               <span className="font-bold">{cart.length}</span> item(s) in cart - Total: ${' '}
-              <span className="font-bold text-blue-600">
+              <span className="font-bold" style={{ color: 'var(--primary)' }}>
                 {cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
               </span>
             </p>
