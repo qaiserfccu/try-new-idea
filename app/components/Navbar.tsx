@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useCart } from '../context/CartContext';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { getTotalItems } = useCart();
+  const totalItems = getTotalItems();
 
   return (
     <nav className="glass-dark sticky top-0 z-50">
@@ -31,9 +34,9 @@ export default function Navbar() {
             </Link>
             <Link
               href="/cart"
-              className="text-purple-200 hover:text-white transition flex items-center"
+              className="text-purple-200 hover:text-white transition flex items-center gap-1"
             >
-              🛒 Cart
+              🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
             </Link>
             <Link
               href="#products"
@@ -100,10 +103,10 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/cart"
-                className="text-purple-200 hover:text-white transition"
+                className="text-purple-200 hover:text-white transition flex items-center gap-1"
                 onClick={() => setIsMenuOpen(false)}
               >
-                🛒 Cart
+                🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
               </Link>
               <Link
                 href="#products"

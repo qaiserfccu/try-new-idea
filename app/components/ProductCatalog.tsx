@@ -1,15 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-  image: string;
-  category: string;
-}
+import { useCart, Product } from '../context/CartContext';
 
 const products: Product[] = [
   {
@@ -127,7 +119,7 @@ const products: Product[] = [
 ];
 
 export default function ProductCatalog() {
-  const [cart, setCart] = useState<Product[]>([]);
+  const { addToCart, getTotalItems, getTotalPrice } = useCart();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
@@ -136,8 +128,8 @@ export default function ProductCatalog() {
     ? products 
     : products.filter(p => p.category === selectedCategory);
 
-  const addToCart = (product: Product) => {
-    setCart([...cart, product]);
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
     alert(`${product.name} added to cart!`);
   };
 
@@ -187,7 +179,7 @@ export default function ProductCatalog() {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold gradient-text">${product.price}</span>
                   <button
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
                   >
                     Add to Cart
@@ -199,12 +191,12 @@ export default function ProductCatalog() {
         </div>
 
         {/* Cart Summary */}
-        {cart.length > 0 && (
+        {getTotalItems() > 0 && (
           <div className="mt-12 glass-card rounded-2xl p-6 text-center">
             <p className="text-lg text-white">
-              <span className="font-bold">{cart.length}</span> item(s) in cart - Total: ${' '}
+              <span className="font-bold">{getTotalItems()}</span> item(s) in cart - Total: ${' '}
               <span className="font-bold gradient-text">
-                {cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+                {getTotalPrice().toFixed(2)}
               </span>
             </p>
           </div>
