@@ -2,36 +2,45 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useCart } from '../context/CartContext';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { getTotalItems } = useCart();
+  const totalItems = getTotalItems();
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="glass-dark sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-blue-600">GymLab</span>
+            <span className="text-2xl font-bold gradient-text">GymLab</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-blue-600 transition">
+            <Link href="/" className="text-purple-200 hover:text-white transition">
               Home
             </Link>
-            <Link href="#products" className="text-gray-700 hover:text-blue-600 transition">
+            <Link href="#products" className="text-purple-200 hover:text-white transition">
               Products
             </Link>
-            <Link href="#about" className="text-gray-700 hover:text-blue-600 transition">
+            <Link href="#about" className="text-purple-200 hover:text-white transition">
               About
             </Link>
-            <Link href="#contact" className="text-gray-700 hover:text-blue-600 transition">
+            <Link href="#contact" className="text-purple-200 hover:text-white transition">
               Contact
             </Link>
             <Link
+              href="/cart"
+              className="text-purple-200 hover:text-white transition flex items-center gap-1"
+            >
+              🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
+            </Link>
+            <Link
               href="#products"
-              className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
+              className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
             >
               Shop Now
             </Link>
@@ -40,7 +49,7 @@ export default function Navbar() {
           {/* Mobile menu button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-gray-700 hover:text-blue-600"
+            className="md:hidden text-purple-200 hover:text-white"
           >
             <svg
               className="h-6 w-6"
@@ -66,35 +75,42 @@ export default function Navbar() {
             <div className="flex flex-col space-y-4">
               <Link
                 href="/"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-purple-200 hover:text-white transition"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 href="#products"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-purple-200 hover:text-white transition"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Products
               </Link>
               <Link
                 href="#about"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-purple-200 hover:text-white transition"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </Link>
               <Link
                 href="#contact"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-purple-200 hover:text-white transition"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
               </Link>
               <Link
+                href="/cart"
+                className="text-purple-200 hover:text-white transition flex items-center gap-1"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
+              </Link>
+              <Link
                 href="#products"
-                className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition text-center"
+                className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Shop Now
