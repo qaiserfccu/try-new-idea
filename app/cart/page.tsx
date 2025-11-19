@@ -57,7 +57,7 @@ export default function CartPage() {
                   <div className="flex-grow">
                     <h3 className="text-xl font-bold text-white mb-1">{item.name}</h3>
                     <p className="text-sm text-purple-300 mb-2">{item.category}</p>
-                    <p className="text-lg font-semibold gradient-text">${item.price.toFixed(2)}</p>
+                    <p className="text-lg font-semibold gradient-text">ر.س {item.price.toFixed(2)}</p>
                   </div>
 
                   {/* Quantity Controls */}
@@ -112,7 +112,7 @@ export default function CartPage() {
                   <div key={item.id} className="flex justify-between text-purple-200">
                     <span>{item.name} × {item.quantity}</span>
                     <span className="text-white font-semibold">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ر.س {(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -121,7 +121,7 @@ export default function CartPage() {
               <div className="border-t border-purple-500/30 pt-4 mb-6">
                 <div className="flex justify-between text-xl font-bold">
                   <span className="text-white">Total</span>
-                  <span className="gradient-text">${getTotalPrice().toFixed(2)}</span>
+                  <span className="gradient-text">ر.س {getTotalPrice().toFixed(2)}</span>
                 </div>
               </div>
 

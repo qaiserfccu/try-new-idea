@@ -32,6 +32,9 @@ export default function Navbar() {
             <Link href="#contact" className="text-purple-200 hover:text-white transition">
               Contact
             </Link>
+            <Link href="/quotations" className="text-purple-200 hover:text-white transition">
+              Quotations
+            </Link>
             <Link
               href="/cart"
               className="text-purple-200 hover:text-white transition flex items-center gap-1"
@@ -100,6 +103,13 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
+              </Link>
+              <Link
+                href="/quotations"
+                className="text-purple-200 hover:text-white transition"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Quotations
               </Link>
               <Link
                 href="/cart"

@@ -7,6 +7,36 @@ import { useCart } from '../context/CartContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
+interface Quotation {
+  id: string;
+  date: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    address: string;
+    notes: string;
+  };
+  items: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    category: string;
+    image: string;
+  }>;
+  totalPrice: number;
+}
+
+// Helper function to save quotation to localStorage
+const saveQuotation = (quotation: Quotation) => {
+  const existingQuotes = localStorage.getItem('quotations');
+  const quotations = existingQuotes ? JSON.parse(existingQuotes) : [];
+  quotations.push(quotation);
+  localStorage.setItem('quotations', JSON.stringify(quotations));
+};
+
 export default function QuotePage() {
   const { cart, getTotalPrice, clearCart } = useCart();
   const router = useRouter();
@@ -24,13 +54,39 @@ export default function QuotePage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Create quotation object
+    const quotation: Quotation = {
+      id: `Q-${Date.now()}`,
+      date: new Date().toISOString(),
+      customer: {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        address: formData.address,
+        notes: formData.notes,
+      },
+      items: cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        category: item.category,
+        image: item.image,
+      })),
+      totalPrice: getTotalPrice(),
+    };
+
+    // Save quotation to localStorage
+    saveQuotation(quotation);
+
     // Simulate quote submission
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    alert('Quote request submitted successfully! We will contact you shortly.');
+    alert(`Quote request submitted successfully! Quote ID: ${quotation.id}`);
     clearCart();
     setIsSubmitting(false);
-    router.push('/');
+    router.push('/quotations');
   };
 
   const handleChange = (
@@ -220,7 +276,7 @@ export default function QuotePage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-purple-200">Qty: {item.quantity}</span>
                       <span className="text-white font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ر.س {(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -230,7 +286,7 @@ export default function QuotePage() {
               <div className="border-t border-purple-500/30 pt-4">
                 <div className="flex justify-between text-xl font-bold mb-4">
                   <span className="text-white">Estimated Total</span>
-                  <span className="gradient-text">${getTotalPrice().toFixed(2)}</span>
+                  <span className="gradient-text">ر.س {getTotalPrice().toFixed(2)}</span>
                 </div>
                 <p className="text-sm text-purple-300 text-center">
                   Final pricing will be confirmed in your quote
