@@ -7,17 +7,17 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-2xl font-bold gradient-text mb-4">GymLab</h3>
+            <h3 className="text-2xl font-bold gradient-text mb-4">ChiltanPure</h3>
             <p className="text-purple-200 mb-4">
-              Premium gymnastics equipment manufacturer providing top-quality products for athletes and facilities worldwide.
+              Pakistan&apos;s leading e-commerce store for organic and natural products. ISO-certified quality you can trust.
             </p>
             <a
-              href="https://gymlab.me"
+              href="https://chiltanpure.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-400 hover:text-purple-300 transition"
             >
-              Visit gymlab.me →
+              Visit chiltanpure.com →
             </a>
           </div>
 
@@ -50,26 +50,26 @@ export default function Footer() {
 
           {/* Products */}
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-white">Products</h4>
+            <h4 className="text-lg font-semibold mb-4 text-white">Categories</h4>
             <ul className="space-y-2">
               <li>
                 <Link href="#products" className="text-purple-200 hover:text-white transition">
-                  Gymnastics Mats
+                  Skincare
                 </Link>
               </li>
               <li>
                 <Link href="#products" className="text-purple-200 hover:text-white transition">
-                  Balance Beams
+                  Haircare
                 </Link>
               </li>
               <li>
                 <Link href="#products" className="text-purple-200 hover:text-white transition">
-                  Uneven Bars
+                  Essential Oils
                 </Link>
               </li>
               <li>
                 <Link href="#products" className="text-purple-200 hover:text-white transition">
-                  Vault Tables
+                  Food & Wellness
                 </Link>
               </li>
             </ul>
@@ -79,16 +79,16 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4 text-white">Contact Us</h4>
             <ul className="space-y-2 text-purple-200">
-              <li>Email: info@gymlab.me</li>
-              <li>Phone: +1 (555) 123-4567</li>
-              <li>Address: 123 Fitness Ave</li>
-              <li>City, State 12345</li>
+              <li>Email: info@chiltanpure.com</li>
+              <li>Phone: +92 (300) 123-4567</li>
+              <li>Address: Lahore, Pakistan</li>
+              <li>COD Available Nationwide</li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-purple-500/20 mt-8 pt-8 text-center text-purple-300">
-          <p>&copy; {new Date().getFullYear()} GymLab. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ChiltanPure. All rights reserved.</p>
         </div>
       </div>
     </footer>
