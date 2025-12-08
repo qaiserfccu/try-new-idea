@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import UserLayout from '../../components/UserLayout';
-import { WishlistItem } from '../../lib/types';
-import { Product } from '../../context/CartContext';
+import { WishlistItem, Product } from '../../lib/types';
 import { useCart } from '../../context/CartContext';
 
 export default function UserWishlist() {
@@ -17,19 +16,22 @@ export default function UserWishlist() {
     const savedWishlist = JSON.parse(localStorage.getItem('chiltanpure_wishlist') || '[]');
     const userWishlist = savedWishlist.filter((item: WishlistItem) => item.userId === user?.id);
     
-    // Load products to get details (in real app, this would be an API call)
-    const products: Product[] = []; // Would fetch actual products
-    
+    // In a real application, fetch actual product details from an API
+    // For demo purposes, create mock product data
     const wishlistWithProducts = userWishlist.map((item: WishlistItem) => ({
       ...item,
-      product: products.find(p => p.id === item.productId) || {
+      product: {
         id: item.productId,
-        name: 'Product',
-        price: 0,
-        description: '',
+        name: 'Product ' + item.productId,
+        slug: 'product-' + item.productId,
+        description: 'Organic product description',
+        price: 999,
         image: '💚',
-        category: '',
-      },
+        category: 'Wellness',
+        stock: 10,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as Product,
     }));
     
     setWishlist(wishlistWithProducts);

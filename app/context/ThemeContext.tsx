@@ -19,8 +19,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
     // Load theme from localStorage
-    const storedTheme = localStorage.getItem('chiltanpure_theme') as Theme;
-    if (storedTheme) {
+    const storedTheme = localStorage.getItem('chiltanpure_theme');
+    if (storedTheme === 'light' || storedTheme === 'dark') {
       setThemeState(storedTheme);
       document.documentElement.classList.toggle('light', storedTheme === 'light');
     }
