@@ -9,15 +9,15 @@ export default function Home() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-purple-900 via-purple-700 to-pink-600 text-white py-20 overflow-hidden shader-effect">
+      <section className="relative bg-gradient-to-r from-green-900 via-green-700 to-emerald-600 text-white py-20 overflow-hidden shader-effect">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">
-              Welcome to GymLab
+              Welcome to ChiltanPure
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-purple-100">
-              Premium Gymnastics Equipment for Athletes and Facilities Worldwide
+              Organic & Natural Products for Your Health, Beauty, and Wellness
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -27,12 +27,12 @@ export default function Home() {
                 Shop Now
               </Link>
               <a
-                href="https://gymlab.me"
+                href="https://chiltanpure.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glass-dark border-2 border-purple-300 text-white px-8 py-4 rounded-full font-semibold hover:bg-purple-500/30 transition text-lg"
               >
-                Visit gymlab.me
+                Visit chiltanpure.com
               </a>
             </div>
           </div>
@@ -43,32 +43,32 @@ export default function Home() {
       <section className="py-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-white mb-4">Why Choose GymLab?</h2>
-            <p className="text-xl text-purple-200">Quality, Innovation, and Excellence</p>
+            <h2 className="text-4xl font-bold text-white mb-4">Why Choose ChiltanPure?</h2>
+            <p className="text-xl text-purple-200">100% Organic, ISO Certified, Trusted by Thousands</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="glass-card rounded-2xl text-center p-6 hover:scale-105 transition-transform">
-              <div className="text-6xl mb-4">🏆</div>
-              <h3 className="text-2xl font-bold mb-3 text-white">Premium Quality</h3>
+              <div className="text-6xl mb-4">🌿</div>
+              <h3 className="text-2xl font-bold mb-3 text-white">100% Organic</h3>
               <p className="text-purple-200">
-                Olympic-standard equipment designed for professional athletes and training facilities
+                All products are ISO-certified organic with no synthetic additives or harmful chemicals
               </p>
             </div>
             
             <div className="glass-card rounded-2xl text-center p-6 hover:scale-105 transition-transform">
-              <div className="text-6xl mb-4">🔒</div>
-              <h3 className="text-2xl font-bold mb-3 text-white">Safety First</h3>
+              <div className="text-6xl mb-4">✨</div>
+              <h3 className="text-2xl font-bold mb-3 text-white">Premium Quality</h3>
               <p className="text-purple-200">
-                All products meet international safety standards with rigorous testing protocols
+                Over 1,500 unique products tested for quality and effectiveness by thousands of satisfied customers
               </p>
             </div>
             
             <div className="glass-card rounded-2xl text-center p-6 hover:scale-105 transition-transform">
               <div className="text-6xl mb-4">🚚</div>
-              <h3 className="text-2xl font-bold mb-3 text-white">Fast Delivery</h3>
+              <h3 className="text-2xl font-bold mb-3 text-white">Fast Delivery & COD</h3>
               <p className="text-purple-200">
-                Worldwide shipping with careful handling to ensure your equipment arrives in perfect condition
+                Nationwide shipping with Cash on Delivery option. Order with confidence and convenience
               </p>
             </div>
           </div>
@@ -83,52 +83,54 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="glass-card rounded-2xl p-8">
-              <h2 className="text-4xl font-bold text-white mb-6">About GymLab</h2>
+              <h2 className="text-4xl font-bold text-white mb-6">About ChiltanPure</h2>
               <p className="text-lg text-purple-200 mb-4">
-                GymLab is a leading manufacturer of premium gymnastics equipment, dedicated to providing 
-                athletes and facilities with the highest quality products for training and competition.
+                ChiltanPure is Pakistan&apos;s leading e-commerce store for organic and natural products, 
+                dedicated to providing customers with the highest quality skincare, haircare, essential oils, 
+                and wellness products.
               </p>
               <p className="text-lg text-purple-200 mb-4">
-                With decades of experience in the industry, we understand the unique needs of gymnasts 
-                and coaches. Our equipment is designed to enhance performance, ensure safety, and withstand 
-                the rigors of intensive training.
+                With over 1,500 unique products, we are ISO-certified and committed to using only natural 
+                ingredients without synthetic additives. Our mission is to promote healthy living through 
+                organic and sustainable products.
               </p>
               <p className="text-lg text-purple-200 mb-6">
-                From beginner to Olympic level, GymLab has the perfect equipment for every athlete&apos;s journey.
+                From beauty essentials to health supplements, ChiltanPure has everything you need for a 
+                natural and healthy lifestyle.
               </p>
               <a
-                href="https://gymlab.me"
+                href="https://chiltanpure.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block purple-gradient text-white px-8 py-3 rounded-full hover:opacity-90 transition font-semibold"
               >
-                Learn More at gymlab.me
+                Learn More at chiltanpure.com
               </a>
             </div>
             
             <div className="glass-card rounded-2xl shader-effect p-12 text-white">
               <div className="text-center">
-                <div className="text-7xl mb-6">🤸‍♀️</div>
-                <h3 className="text-3xl font-bold mb-4">Trusted by Champions</h3>
+                <div className="text-7xl mb-6">🌿</div>
+                <h3 className="text-3xl font-bold mb-4">Trusted by Thousands</h3>
                 <p className="text-lg mb-6 text-purple-100">
-                  Our equipment is used by professional athletes and training facilities worldwide
+                  Our organic products are loved by customers across Pakistan and beyond
                 </p>
                 <div className="grid grid-cols-2 gap-6 text-center">
                   <div>
-                    <div className="text-4xl font-bold">1000+</div>
-                    <div className="text-sm text-purple-200">Facilities</div>
+                    <div className="text-4xl font-bold">1500+</div>
+                    <div className="text-sm text-purple-200">Products</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold">50+</div>
-                    <div className="text-sm text-purple-200">Countries</div>
+                    <div className="text-4xl font-bold">ISO</div>
+                    <div className="text-sm text-purple-200">Certified</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold">10K+</div>
-                    <div className="text-sm text-purple-200">Athletes</div>
+                    <div className="text-4xl font-bold">5000+</div>
+                    <div className="text-sm text-purple-200">Reviews</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold">25+</div>
-                    <div className="text-sm text-purple-200">Years</div>
+                    <div className="text-4xl font-bold">100%</div>
+                    <div className="text-sm text-purple-200">Organic</div>
                   </div>
                 </div>
               </div>
@@ -193,8 +195,8 @@ export default function Home() {
             
             <div className="mt-8 text-center">
               <p className="text-purple-200 mb-2">Or reach us directly:</p>
-              <p className="text-white font-semibold">info@gymlab.me</p>
-              <p className="text-white font-semibold">+1 (555) 123-4567</p>
+              <p className="text-white font-semibold">info@chiltanpure.com</p>
+              <p className="text-white font-semibold">+92 (300) 123-4567</p>
             </div>
           </div>
         </div>

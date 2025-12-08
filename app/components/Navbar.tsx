@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getTotalItems } = useCart();
+  const { user, logout, isAuthenticated } = useAuth();
   const totalItems = getTotalItems();
 
   return (
@@ -15,7 +17,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold gradient-text">GymLab</span>
+            <span className="text-2xl font-bold gradient-text">ChiltanPure</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -38,6 +40,24 @@ export default function Navbar() {
             >
               🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
             </Link>
+            {isAuthenticated ? (
+              <>
+                <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
+                <button
+                  onClick={logout}
+                  className="text-purple-200 hover:text-white transition text-sm"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-purple-200 hover:text-white transition"
+              >
+                Login
+              </Link>
+            )}
             <Link
               href="#products"
               className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
@@ -108,6 +128,28 @@ export default function Navbar() {
               >
                 🛒 Cart {totalItems > 0 && <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">{totalItems}</span>}
               </Link>
+              {isAuthenticated ? (
+                <>
+                  <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="text-purple-200 hover:text-white transition text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="text-purple-200 hover:text-white transition"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
               <Link
                 href="#products"
                 className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition text-center"

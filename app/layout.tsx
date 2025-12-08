@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "./context/CartContext";
+import { AuthProvider } from "./context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "GymLab - Premium Gymnastics Equipment",
-  description: "Discover premium gymnastics equipment and accessories at GymLab. Shop high-quality mats, bars, beams, and more.",
+  title: "ChiltanPure - Organic & Natural Products Store",
+  description: "Shop organic skincare, haircare, essential oils, natural food products, and wellness items at ChiltanPure. Premium quality organic products with fast delivery and COD available.",
 };
 
 export default function RootLayout({
@@ -15,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <CartProvider>
-          {children}
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );
