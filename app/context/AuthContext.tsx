@@ -84,6 +84,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signup = async (name: string, email: string, password: string, phone?: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, phone }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const newUser: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        address: data.user.address,
+        city: data.user.city,
+        postalCode: data.user.postalCode,
+        createdAt: data.user.createdAt,
+      };
+
+      setUser(newUser);
+      localStorage.setItem('chiltanpure_user', JSON.stringify(newUser));
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('chiltanpure_user');
