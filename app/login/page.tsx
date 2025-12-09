@@ -49,6 +49,16 @@ export default function LoginPage() {
     }
   };
 
+  const handleAutoPopulate = (email: string, password: string, name: string = '') => {
+    setFormData({
+      name,
+      email,
+      password,
+      phone: '',
+    });
+    setError('');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -66,7 +76,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold text-white mb-2">
               {isSignup ? 'Create Account' : 'Welcome Back'}
             </h1>
-            <p className="text-purple-200">
+            <p className="text-green-200">
               {isSignup
                 ? 'Sign up to start shopping organic products'
                 : 'Login to your ChiltanPure account'}
@@ -79,10 +89,39 @@ export default function LoginPage() {
             </div>
           )}
 
+          {!isSignup && (
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <p className="text-green-200 text-sm font-medium mb-3">Quick Login (Test Users):</p>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleAutoPopulate('admin@trynewidea.com', 'Admin123', 'Admin User')}
+                  className="w-full text-left px-3 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg text-green-200 text-sm transition"
+                >
+                  👑 Admin: admin@trynewidea.com / Admin123
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoPopulate('user@trynewidea.com', 'User123', 'Regular User')}
+                  className="w-full text-left px-3 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg text-green-200 text-sm transition"
+                >
+                  👤 User: user@trynewidea.com / User123
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoPopulate('manager@trynewidea.com', 'Manager123', 'Manager User')}
+                  className="w-full text-left px-3 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg text-green-200 text-sm transition"
+                >
+                  📊 Manager: manager@trynewidea.com / Manager123
+                </button>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {isSignup && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-purple-200 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-green-200 mb-2">
                   Full Name *
                 </label>
                 <input
@@ -92,14 +131,14 @@ export default function LoginPage() {
                   required={isSignup}
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                  className="w-full px-4 py-3 bg-white/10 border border-green-300/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-white placeholder-green-300"
                   placeholder="John Doe"
                 />
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-purple-200 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-green-200 mb-2">
                 Email Address *
               </label>
               <input
@@ -109,13 +148,13 @@ export default function LoginPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                className="w-full px-4 py-3 bg-white/10 border border-green-300/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-white placeholder-green-300"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-purple-200 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-green-200 mb-2">
                 Password *
               </label>
               <input
@@ -125,14 +164,14 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                className="w-full px-4 py-3 bg-white/10 border border-green-300/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-white placeholder-green-300"
                 placeholder="••••••••"
               />
             </div>
 
             {isSignup && (
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-purple-200 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-green-200 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -141,7 +180,7 @@ export default function LoginPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                  className="w-full px-4 py-3 bg-white/10 border border-green-300/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-white placeholder-green-300"
                   placeholder="+92 300 1234567"
                 />
               </div>
@@ -162,7 +201,7 @@ export default function LoginPage() {
                 setIsSignup(!isSignup);
                 setError('');
               }}
-              className="text-purple-300 hover:text-purple-200 transition"
+              className="text-green-300 hover:text-green-200 transition"
             >
               {isSignup
                 ? 'Already have an account? Login'
@@ -173,7 +212,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <Link
               href="/checkout"
-              className="text-purple-400 hover:text-purple-300 transition text-sm"
+              className="text-green-400 hover:text-green-300 transition text-sm"
             >
               Continue as guest →
             </Link>

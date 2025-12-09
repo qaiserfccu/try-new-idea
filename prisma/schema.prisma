@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  users     User[]
+  
+  @@map("roles")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(255)
+  email      String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255)
+  phone      String?  @db.VarChar(50)
+  address    String?  @db.Text
+  city       String?  @db.VarChar(100)
+  postalCode String?  @map("postal_code") @db.VarChar(20)
+  roleId     Int      @default(2) @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  role       Role     @relation(fields: [roleId], references: [id])
+  orders     Order[]
+  
+  @@map("users")
+}
+
+model Product {
+  id                Int      @id @default(autoincrement())
+  name              String   @db.VarChar(255)
+  description       String?  @db.Text
+  price             Decimal  @db.Decimal(10, 2)
+  originalPrice     Decimal? @map("original_price") @db.Decimal(10, 2)
+  chiltanpureUrl    String?  @map("chiltanpure_url") @db.VarChar(500)
+  images            String[] @db.VarChar(500)
+  category          String?  @db.VarChar(100)
+  stock             Int      @default(0)
+  isAvailable       Boolean  @default(true) @map("is_available")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  orderItems        OrderItem[]
+  
+  @@map("products")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  totalAmount   Decimal     @map("total_amount") @db.Decimal(10, 2)
+  status        String      @default("pending") @db.VarChar(50)
+  paymentMethod String      @map("payment_method") @db.VarChar(50)
+  shippingAddress String    @map("shipping_address") @db.Text
+  trackingNumber String?    @map("tracking_number") @db.VarChar(100)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  
+  user          User        @relation(fields: [userId], references: [id])
+  orderItems    OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  productId Int      @map("product_id")
+  quantity  Int
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
