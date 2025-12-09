@@ -1,17 +1,9 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
-  createdAt?: string;
-}
+import { User } from '../lib/types';
+import { DEFAULT_ADMIN } from '../lib/constants';
+import { generateId } from '../lib/utils';
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +11,8 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, phone?: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      const mockUser: User = {
+      const loggedInUser: User = {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
@@ -60,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: data.user.createdAt,
       };
 
-      setUser(mockUser);
-      localStorage.setItem('chiltanpure_user', JSON.stringify(mockUser));
+      setUser(loggedInUser);
+      localStorage.setItem('chiltanpure_user', JSON.stringify(loggedInUser));
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -69,38 +63,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (name: string, email: string, password: string, phone?: string): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, phone }),
-      });
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const data = await response.json();
-      const newUser: User = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        address: data.user.address,
-        city: data.user.city,
-        postalCode: data.user.postalCode,
-        createdAt: data.user.createdAt,
-      };
-
-      setUser(newUser);
-      localStorage.setItem('chiltanpure_user', JSON.stringify(newUser));
-      return true;
-    } catch (error) {
-      console.error('Signup error:', error);
-      return false;
+  const updateUser = (updates: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('chiltanpure_user', JSON.stringify(updatedUser));
+    
+    // Update in users list
+    const users = JSON.parse(localStorage.getItem('chiltanpure_users') || '[]');
+    const userIndex = users.findIndex((u: User) => u.id === user.id);
+    if (userIndex !== -1) {
+      users[userIndex] = updatedUser;
+      localStorage.setItem('chiltanpure_users', JSON.stringify(users));
     }
   };
 
@@ -117,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signup,
         logout,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        updateUser,
       }}
     >
       {children}

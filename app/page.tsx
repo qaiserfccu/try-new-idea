@@ -27,7 +27,7 @@ export default function Home() {
                 Shop Now
               </Link>
               <a
-                href="https://chiltanpure.com"
+                href="https://chiltanpure.com?bg_ref=XEUldZfjcO"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="glass-dark border-2 border-purple-300 text-white px-8 py-4 rounded-full font-semibold hover:bg-purple-500/30 transition text-lg"
@@ -99,7 +99,7 @@ export default function Home() {
                 natural and healthy lifestyle.
               </p>
               <a
-                href="https://chiltanpure.com"
+                href="https://chiltanpure.com?bg_ref=XEUldZfjcO"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block purple-gradient text-white px-8 py-3 rounded-full hover:opacity-90 transition font-semibold"

@@ -7,16 +7,19 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Order, Address } from '../lib/types';
+import { generateId, generateOrderNumber } from '../lib/utils';
 
 export default function CheckoutPage() {
   const { cart, getTotalPrice, clearCart, applyDiscount, discountCode, discountAmount } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, signup, login } = useAuth();
   const router = useRouter();
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
+    password: '',
     address: '',
     city: '',
     postalCode: '',
@@ -27,6 +30,7 @@ export default function CheckoutPage() {
   const [promoCode, setPromoCode] = useState('');
   const [promoError, setPromoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPasswordField] = useState(!isAuthenticated);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -64,6 +68,97 @@ export default function CheckoutPage() {
       }
 
       const data = await response.json();
+      let currentUserId = user?.id;
+
+      // If user is not authenticated, auto-create account
+      if (!isAuthenticated) {
+        if (!formData.password) {
+          alert('Please enter a password to create your account');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Create new user account
+        const success = await signup(
+          formData.name,
+          formData.email,
+          formData.password,
+          formData.phone
+        );
+        
+        if (!success) {
+          // User exists, try to login
+          alert('Account already exists. Logging you in...');
+          const loginSuccess = await login(formData.email, formData.password);
+          if (!loginSuccess) {
+            alert('Incorrect password. Please try again or use a different email.');
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
+        // Get the user ID after signup/login
+        const storedUser = localStorage.getItem('chiltanpure_user');
+        if (storedUser) {
+          currentUserId = JSON.parse(storedUser).id;
+        }
+      }
+
+      // Create order
+      const subtotal = cart.reduce((total, item) => {
+        const itemPrice = item.selectedVariant ? item.selectedVariant.price : item.price;
+        return total + itemPrice * item.quantity;
+      }, 0);
+
+      const shippingCost = subtotal > 2000 ? 0 : 150;
+
+      const shippingAddress: Address = {
+        id: generateId(),
+        userId: currentUserId || '',
+        label: 'Delivery Address',
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        isDefault: false,
+      };
+
+      const order: Order = {
+        id: generateId(),
+        userId: currentUserId || '',
+        orderNumber: generateOrderNumber(),
+        items: cart.map(item => ({
+          productId: item.id,
+          name: item.name,
+          image: item.image,
+          price: item.selectedVariant ? item.selectedVariant.price : item.price,
+          quantity: item.quantity,
+          variantId: item.selectedVariant?.id,
+          variantName: item.selectedVariant?.name,
+        })),
+        subtotal,
+        discount: discountAmount,
+        shipping: shippingCost,
+        total: getTotalPrice() + shippingCost,
+        status: 'pending',
+        paymentMethod,
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+        shippingAddress,
+        notes: formData.notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save order to localStorage
+      const existingOrders = JSON.parse(localStorage.getItem('chiltanpure_orders') || '[]');
+      existingOrders.push(order);
+      localStorage.setItem('chiltanpure_orders', JSON.stringify(existingOrders));
+
+      // Save address
+      const existingAddresses = JSON.parse(localStorage.getItem('chiltanpure_addresses') || '[]');
+      existingAddresses.push(shippingAddress);
+      localStorage.setItem('chiltanpure_addresses', JSON.stringify(existingAddresses));
 
       // Clear cart
       clearCart();
@@ -78,6 +173,11 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Error placing order:', error);
       alert('There was an error placing your order. Please try again.');
+      // Redirect to orders page with the new order
+      router.push(`/user/orders?order=${order.id}`);
+    } catch (error) {
+      console.error('Order submission error:', error);
+      alert('Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +232,7 @@ export default function CheckoutPage() {
     return total + itemPrice * item.quantity;
   }, 0);
 
-  const shippingCost = subtotal > 2000 ? 0 : 150; // Free shipping over Rs. 2000
+  const shippingCost = subtotal > 2000 ? 0 : 150;
 
   return (
     <div className="min-h-screen">
@@ -144,16 +244,8 @@ export default function CheckoutPage() {
           <p className="text-xl text-purple-200">
             {isAuthenticated
               ? `Welcome back, ${user?.name}! Complete your order below.`
-              : 'Complete your order as a guest or login for faster checkout.'}
+              : 'Complete your order and create your account with just a password!'}
           </p>
-          {!isAuthenticated && (
-            <Link
-              href="/login"
-              className="inline-block mt-4 text-purple-400 hover:text-purple-300 transition"
-            >
-              Login to your account →
-            </Link>
-          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -162,7 +254,14 @@ export default function CheckoutPage() {
             <div className="glass-card rounded-2xl p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-4">Shipping Information</h2>
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    {isAuthenticated ? 'Shipping Information' : 'Your Information'}
+                  </h2>
+                  {!isAuthenticated && (
+                    <p className="text-purple-300 text-sm mb-4">
+                      ✨ We&apos;ll automatically create an account for you. Just enter a password!
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -193,11 +292,34 @@ export default function CheckoutPage() {
                       required
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                      disabled={isAuthenticated}
+                      className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300 disabled:opacity-50"
                       placeholder="john@example.com"
                     />
                   </div>
                 </div>
+
+                {!isAuthenticated && showPasswordField && (
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-purple-200 mb-2">
+                      Create Password * 🔐
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-white/10 border border-purple-300/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder-purple-300"
+                      placeholder="Enter a secure password"
+                      minLength={6}
+                    />
+                    <p className="text-xs text-purple-300 mt-1">
+                      You&apos;ll be automatically logged in after checkout
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-purple-200 mb-2">
@@ -340,7 +462,7 @@ export default function CheckoutPage() {
                   </button>
                   <Link
                     href="/cart"
-                    className="glass text-purple-200 hover:bg-white/20 px-8 py-4 rounded-full transition font-semibold text-center"
+                    className="glass text-purple-200 hover:bg-white/20 px-8 py-4 rounded-full transition font-semibold text-center flex items-center"
                   >
                     Back to Cart
                   </Link>
@@ -378,7 +500,6 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Promo Code */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-purple-200 mb-2">
                   Promo Code

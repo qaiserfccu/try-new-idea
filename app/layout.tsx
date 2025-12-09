@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 export const metadata: Metadata = {
   title: "ChiltanPure - Organic & Natural Products Store",
@@ -16,11 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

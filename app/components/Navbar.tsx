@@ -1,15 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import dynamic from 'next/dynamic';
+
+// Dynamically import ThemeToggle to avoid SSR issues
+const ThemeToggle = dynamic(() => import('./ThemeToggle'), { ssr: false });
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { getTotalItems } = useCart();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const totalItems = getTotalItems();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <nav className="glass-dark sticky top-0 z-50">
@@ -45,6 +54,21 @@ export default function Navbar() {
                 <Link href="/profile" className="text-purple-200 hover:text-white transition">
                   👤 Profile
                 </Link>
+                {isAdmin ? (
+                  <Link
+                    href="/admin/dashboard"
+                    className="text-purple-200 hover:text-white transition"
+                  >
+                    Admin
+                  </Link>
+                ) : (
+                  <Link
+                    href="/user/dashboard"
+                    className="text-purple-200 hover:text-white transition"
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
                 <button
                   onClick={logout}
@@ -61,6 +85,7 @@ export default function Navbar() {
                 Login
               </Link>
             )}
+            {mounted && <ThemeToggle />}
             <Link
               href="#products"
               className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
@@ -140,6 +165,23 @@ export default function Navbar() {
                   >
                     👤 Profile
                   </Link>
+                  {isAdmin ? (
+                    <Link
+                      href="/admin/dashboard"
+                      className="text-purple-200 hover:text-white transition"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Panel
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/user/dashboard"
+                      className="text-purple-200 hover:text-white transition"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Dashboard
+                    </Link>
+                  )}
                   <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
                   <button
                     onClick={() => {
@@ -159,6 +201,12 @@ export default function Navbar() {
                 >
                   Login
                 </Link>
+              )}
+              {mounted && (
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-200 text-sm">Theme:</span>
+                  <ThemeToggle />
+                </div>
               )}
               <Link
                 href="#products"
