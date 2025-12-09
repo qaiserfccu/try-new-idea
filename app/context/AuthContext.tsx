@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         phone: data.user.phone,
-        role: 'user', // Default to user, will be updated based on role_id
+        role: data.user.role || 'user',
         createdAt: data.user.createdAt,
         updatedAt: data.user.createdAt,
       };
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         name: data.user.name,
         email: data.user.email,
         phone: data.user.phone,
-        role: 'user', // Default to user
+        role: data.user.role || 'user',
         createdAt: data.user.createdAt,
         updatedAt: data.user.createdAt,
       };

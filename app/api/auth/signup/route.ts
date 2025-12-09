@@ -27,9 +27,7 @@ export async function POST(request: NextRequest) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      address: user.address,
-      city: user.city,
-      postalCode: user.postal_code,
+      role: 'user', // New users default to user role
       createdAt: user.created_at,
     };
 

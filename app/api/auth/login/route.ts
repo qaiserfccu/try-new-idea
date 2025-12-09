@@ -10,7 +10,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user exists
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query(
+      'SELECT users.*, roles.name as role_name FROM users LEFT JOIN roles ON users.role_id = roles.id WHERE users.email = $1',
+      [email]
+    );
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
@@ -28,9 +31,7 @@ export async function POST(request: NextRequest) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      address: user.address,
-      city: user.city,
-      postalCode: user.postal_code,
+      role: user.role_name === 'admin' ? 'admin' : 'user',
       createdAt: user.created_at,
     };
 
