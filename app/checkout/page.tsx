@@ -32,18 +32,55 @@ export default function CheckoutPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate order submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Calculate totals
+      const subtotal = cart.reduce((total, item) => {
+        const itemPrice = item.selectedVariant ? item.selectedVariant.price : item.price;
+        return total + itemPrice * item.quantity;
+      }, 0);
+      const shippingCost = subtotal > 2000 ? 0 : 150;
+      const total = getTotalPrice() + shippingCost;
 
-    alert(
-      `Order placed successfully!\n\nPayment Method: ${
-        paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'
-      }\n\nTotal: Rs. ${getTotalPrice().toFixed(2)}\n\nWe will contact you shortly to confirm your order.`
-    );
-    
-    clearCart();
-    setIsSubmitting(false);
-    router.push('/');
+      // Prepare shipping address
+      const shippingAddress = `${formData.address}, ${formData.city}${formData.postalCode ? `, ${formData.postalCode}` : ''}`;
+
+      // Create order via API
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          cartItems: cart,
+          totalAmount: total,
+          shippingAddress,
+          paymentMethod,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+
+      const data = await response.json();
+
+      // Clear cart
+      clearCart();
+
+      alert(
+        `Order placed successfully!\n\nOrder ID: #${data.orderId}\n\nPayment Method: ${
+          paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'
+        }\n\nTotal: Rs. ${total.toFixed(2)}\n\nWe will contact you shortly to confirm your order.`
+      );
+
+      router.push('/');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('There was an error placing your order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (

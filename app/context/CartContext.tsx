@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface ProductVariant {
   id: string;
@@ -43,60 +44,145 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountCode, setDiscountCode] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
 
-  const addToCart = (product: Product, selectedVariant?: ProductVariant) => {
-    setCart((prevCart) => {
-      const itemKey = selectedVariant ? `${product.id}-${selectedVariant.id}` : `${product.id}`;
-      const existingItem = prevCart.find((item) => {
-        const cartKey = item.selectedVariant ? `${item.id}-${item.selectedVariant.id}` : `${item.id}`;
-        return cartKey === itemKey;
+  // Load cart from database when user logs in
+  useEffect(() => {
+    if (user) {
+      loadCartFromDatabase();
+    } else {
+      setCart([]);
+    }
+  }, [user]);
+
+  const loadCartFromDatabase = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/cart?userId=${user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to load cart');
+      }
+
+      const data = await response.json();
+      const cartItems: CartItem[] = data.cartItems.map((item: any) => ({
+        id: item.productId,
+        name: item.product.name,
+        price: parseFloat(item.product.price),
+        description: '', // We'll need to add this to the API response
+        image: '', // We'll need to add this to the API response
+        category: '', // We'll need to add this to the API response
+        quantity: item.quantity,
+        selectedVariant: item.variant ? {
+          id: item.variant.id,
+          name: item.variant.name,
+          price: parseFloat(item.variant.price),
+        } : undefined,
+      }));
+
+      setCart(cartItems);
+    } catch (error) {
+      console.error('Error loading cart from database:', error);
+    }
+  };
+
+  const addToCart = async (product: Product, selectedVariant?: ProductVariant) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          productId: product.id,
+          variantId: selectedVariant?.id,
+          quantity: 1,
+        }),
       });
-      
-      if (existingItem) {
-        return prevCart.map((item) => {
-          const cartKey = item.selectedVariant ? `${item.id}-${item.selectedVariant.id}` : `${item.id}`;
-          return cartKey === itemKey
-            ? { ...item, quantity: item.quantity + 1 }
-            : item;
-        });
+
+      if (response.ok) {
+        // Reload cart to get updated state
+        await loadCartFromDatabase();
       }
-      return [...prevCart, { ...product, quantity: 1, selectedVariant }];
-    });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
-  const removeFromCart = (productId: number, variantId?: string) => {
-    setCart((prevCart) => prevCart.filter((item) => {
-      if (variantId) {
-        return !(item.id === productId && item.selectedVariant?.id === variantId);
+  const removeFromCart = async (productId: number, variantId?: string) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/cart?userId=${user.id}&productId=${productId}&variantId=${variantId || ''}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Reload cart to get updated state
+        await loadCartFromDatabase();
       }
-      return item.id !== productId;
-    }));
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
   };
 
-  const updateQuantity = (productId: number, quantity: number, variantId?: string) => {
+  const updateQuantity = async (productId: number, quantity: number, variantId?: string) => {
+    if (!user) return;
+
     if (quantity <= 0) {
-      removeFromCart(productId, variantId);
+      await removeFromCart(productId, variantId);
       return;
     }
-    setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (variantId) {
-          return item.id === productId && item.selectedVariant?.id === variantId
-            ? { ...item, quantity }
-            : item;
-        }
-        return item.id === productId ? { ...item, quantity } : item;
-      })
-    );
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          productId,
+          variantId,
+          quantity,
+        }),
+      });
+
+      if (response.ok) {
+        // Reload cart to get updated state
+        await loadCartFromDatabase();
+      }
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-    setDiscountCode(null);
-    setDiscountAmount(0);
+  const clearCart = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (response.ok) {
+        setCart([]);
+        setDiscountCode(null);
+        setDiscountAmount(0);
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
   const getTotalItems = () => {

@@ -8,6 +8,9 @@ interface User {
   email: string;
   phone?: string;
   address?: string;
+  city?: string;
+  postalCode?: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {
@@ -24,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
+    // Check if user is stored in localStorage for session persistence
     const storedUser = localStorage.getItem('chiltanpure_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -32,38 +35,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // For demo purposes, accept any login
-    const mockUser: User = {
-      id: '1',
-      name: email.split('@')[0],
-      email: email,
-      phone: '',
-      address: '',
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('chiltanpure_user', JSON.stringify(mockUser));
-    return true;
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const mockUser: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        address: data.user.address,
+        city: data.user.city,
+        postalCode: data.user.postalCode,
+        createdAt: data.user.createdAt,
+      };
+
+      setUser(mockUser);
+      localStorage.setItem('chiltanpure_user', JSON.stringify(mockUser));
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
   const signup = async (name: string, email: string, password: string, phone?: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newUser: User = {
-      id: Date.now().toString(),
-      name,
-      email,
-      phone,
-      address: '',
-    };
-    
-    setUser(newUser);
-    localStorage.setItem('chiltanpure_user', JSON.stringify(newUser));
-    return true;
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, phone }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      const newUser: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        address: data.user.address,
+        city: data.user.city,
+        postalCode: data.user.postalCode,
+        createdAt: data.user.createdAt,
+      };
+
+      setUser(newUser);
+      localStorage.setItem('chiltanpure_user', JSON.stringify(newUser));
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
   };
 
   const logout = () => {

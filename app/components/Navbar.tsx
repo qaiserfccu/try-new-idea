@@ -42,6 +42,9 @@ export default function Navbar() {
             </Link>
             {isAuthenticated ? (
               <>
+                <Link href="/profile" className="text-purple-200 hover:text-white transition">
+                  👤 Profile
+                </Link>
                 <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
                 <button
                   onClick={logout}
@@ -130,6 +133,13 @@ export default function Navbar() {
               </Link>
               {isAuthenticated ? (
                 <>
+                  <Link
+                    href="/profile"
+                    className="text-purple-200 hover:text-white transition"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    👤 Profile
+                  </Link>
                   <span className="text-purple-200 text-sm">Hi, {user?.name}</span>
                   <button
                     onClick={() => {
