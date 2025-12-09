@@ -18,16 +18,23 @@ interface Product {
   stock: number;
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(3);
+  const [productId, setProductId] = useState<string | null>(null);
 
   useEffect(() => {
+    params.then((p) => setProductId(p.id));
+  }, [params]);
+
+  useEffect(() => {
+    if (!productId) return;
+    
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${params.id}`);
+        const response = await fetch(`/api/products/${productId}`);
         if (!response.ok) throw new Error('Product not found');
         const data = await response.json();
         setProduct(data);
@@ -40,7 +47,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [productId]);
 
   useEffect(() => {
     if (!loading) {
