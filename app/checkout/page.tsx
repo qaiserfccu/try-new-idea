@@ -104,62 +104,6 @@ export default function CheckoutPage() {
         }
       }
 
-      // Create order
-      const subtotal = cart.reduce((total, item) => {
-        const itemPrice = item.selectedVariant ? item.selectedVariant.price : item.price;
-        return total + itemPrice * item.quantity;
-      }, 0);
-
-      const shippingCost = subtotal > 2000 ? 0 : 150;
-
-      const shippingAddress: Address = {
-        id: generateId(),
-        userId: currentUserId || '',
-        label: 'Delivery Address',
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
-        isDefault: false,
-      };
-
-      const order: Order = {
-        id: generateId(),
-        userId: currentUserId || '',
-        orderNumber: generateOrderNumber(),
-        items: cart.map(item => ({
-          productId: item.id,
-          name: item.name,
-          image: item.image,
-          price: item.selectedVariant ? item.selectedVariant.price : item.price,
-          quantity: item.quantity,
-          variantId: item.selectedVariant?.id,
-          variantName: item.selectedVariant?.name,
-        })),
-        subtotal,
-        discount: discountAmount,
-        shipping: shippingCost,
-        total: getTotalPrice() + shippingCost,
-        status: 'pending',
-        paymentMethod,
-        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-        shippingAddress,
-        notes: formData.notes,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Save order to localStorage
-      const existingOrders = JSON.parse(localStorage.getItem('chiltanpure_orders') || '[]');
-      existingOrders.push(order);
-      localStorage.setItem('chiltanpure_orders', JSON.stringify(existingOrders));
-
-      // Save address
-      const existingAddresses = JSON.parse(localStorage.getItem('chiltanpure_addresses') || '[]');
-      existingAddresses.push(shippingAddress);
-      localStorage.setItem('chiltanpure_addresses', JSON.stringify(existingAddresses));
-
       // Clear cart
       clearCart();
 
@@ -170,11 +114,6 @@ export default function CheckoutPage() {
       );
 
       router.push('/');
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('There was an error placing your order. Please try again.');
-      // Redirect to orders page with the new order
-      router.push(`/user/orders?order=${order.id}`);
     } catch (error) {
       console.error('Order submission error:', error);
       alert('Failed to place order. Please try again.');

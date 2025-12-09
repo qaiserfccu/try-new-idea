@@ -33,9 +33,9 @@ export default function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: user.address || '',
-        city: user.city || '',
-        postalCode: user.postalCode || '',
+        address: '',
+        city: '',
+        postalCode: '',
       });
     }
   }, [user, isAuthenticated, router]);
