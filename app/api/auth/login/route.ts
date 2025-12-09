@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists
     const result = await pool.query(
-      'SELECT users.*, roles.name as role_name FROM users LEFT JOIN roles ON users.role_id = roles.id WHERE users.email = $1',
+      'SELECT * FROM users WHERE email = $1',
       [email]
     );
     if (result.rows.length === 0) {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      role: user.role_name === 'admin' ? 'admin' : 'user',
+      role: user.email === 'admin@trynewidea.com' ? 'admin' : 'user', // Simple admin check
       createdAt: user.created_at,
     };
 

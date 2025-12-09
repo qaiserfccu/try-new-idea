@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await pool.query(`
-      SELECT ci.*, p.name, p.price, pv.variant_name, pv.price as variant_price
+      SELECT ci.*, p.name, p.price, pv.name as variant_name, pv.price as variant_price
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       LEFT JOIN product_variants pv ON ci.variant_id = pv.id

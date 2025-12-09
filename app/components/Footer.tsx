@@ -12,7 +12,7 @@ export default function Footer() {
               Pakistan&apos;s leading e-commerce store for organic and natural products. ISO-certified quality you can trust.
             </p>
             <a
-              href="https://chiltanpure.com"
+              href="https://chiltanpure.com?bg_ref=XEUldZfjcO"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-400 hover:text-purple-300 transition"

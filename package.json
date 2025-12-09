@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "db:init": "psql $DATABASE_URL -f prisma/init.sql"
+    "db:init": "node scripts/db-init.js"
   },
   "dependencies": {
     "@prisma/client": "^7.1.0",
