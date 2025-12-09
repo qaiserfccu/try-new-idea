@@ -6,7 +6,11 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "db:init": "psql $DATABASE_URL -f prisma/init.sql"
   },
   "dependencies": {
     "@prisma/client": "^7.1.0",

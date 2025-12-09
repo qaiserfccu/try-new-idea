@@ -36,53 +36,59 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="md:col-span-1">
             <div className="glass-card rounded-2xl p-6 sticky top-24">
               <div className="text-center mb-6">
-                <div className="w-20 h-20 mx-auto purple-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold mb-3">
+                <div className="w-20 h-20 mx-auto purple-gradient rounded-full flex items-center justify-center text-white text-2xl font-bold mb-3 shadow-lg">
                   👑
                 </div>
                 <h3 className="text-lg font-semibold text-white">Admin Panel</h3>
-                <p className="text-sm text-purple-300">{user?.email}</p>
+                <p className="text-sm text-green-300">{user?.email}</p>
               </div>
               
               <nav className="space-y-2">
                 <Link
                   href="/admin/dashboard"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   📊 Dashboard
                 </Link>
                 <Link
                   href="/admin/orders"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   📦 Orders
                 </Link>
                 <Link
                   href="/admin/products"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   🛍️ Products
                 </Link>
                 <Link
+                  href="/admin/catalog-sync"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium border-l-2 border-green-500/50"
+                >
+                  🔄 Catalog Sync
+                </Link>
+                <Link
                   href="/admin/users"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   👥 Users
                 </Link>
                 <Link
                   href="/admin/analytics"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   📈 Analytics
                 </Link>
                 <Link
                   href="/admin/promotions"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   🎁 Promotions
                 </Link>
                 <Link
                   href="/admin/contacts"
-                  className="block px-4 py-3 rounded-lg text-purple-200 hover:bg-white/10 transition"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
                   📧 Contacts
                 </Link>
