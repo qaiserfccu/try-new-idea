@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
 import { CHILTANPURE_REFERRAL_CODE } from '../../lib/constants';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -19,11 +18,22 @@ interface Product {
 }
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(3);
   const [productId, setProductId] = useState<string | null>(null);
+
+  const handleRedirect = useCallback(() => {
+    if (product?.chiltanpureUrl) {
+      // Ensure the URL has the referral parameter
+      const url = new URL(product.chiltanpureUrl);
+      url.searchParams.set('bg_ref', CHILTANPURE_REFERRAL_CODE);
+      window.location.href = url.toString();
+    } else {
+      // Fallback to main ChiltanPure site
+      window.location.href = `https://chiltanpure.com?bg_ref=${CHILTANPURE_REFERRAL_CODE}`;
+    }
+  }, [product]);
 
   useEffect(() => {
     params.then((p) => setProductId(p.id));
@@ -64,27 +74,21 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       return () => clearInterval(timer);
     }
-  }, [loading, product]);
+  }, [loading, handleRedirect]);
 
-  const handleRedirect = () => {
-    if (product?.chiltanpureUrl) {
-      // Ensure the URL has the referral parameter
-      const url = new URL(product.chiltanpureUrl);
-      url.searchParams.set('bg_ref', CHILTANPURE_REFERRAL_CODE);
-      window.location.href = url.toString();
-    } else {
-      // Fallback to main ChiltanPure site
-      window.location.href = `https://chiltanpure.com?bg_ref=${CHILTANPURE_REFERRAL_CODE}`;
-    }
+  const handleRedirectNow = () => {
+    handleRedirect();
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="glass-card rounded-2xl p-12 text-center">
-          <div className="text-white text-xl mb-4">Loading product details...</div>
-          <div className="animate-spin h-12 w-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto"></div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="glass-card rounded-2xl p-12 text-center">
+            <div className="text-white text-xl mb-4">Loading product details...</div>
+            <div className="animate-spin h-12 w-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto"></div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -139,7 +143,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               <button
-                onClick={handleRedirect}
+                onClick={handleRedirectNow}
                 className="purple-gradient text-white px-10 py-4 rounded-full hover:opacity-90 transition text-lg font-semibold shadow-2xl hover:scale-105 transform"
               >
                 Go to ChiltanPure Now →

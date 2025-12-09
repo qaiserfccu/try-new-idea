@@ -26,7 +26,7 @@ export async function GET() {
       price: parseFloat(row.price),
       originalPrice: row.original_price ? parseFloat(row.original_price) : undefined,
       description: row.description,
-      image: row.images && row.images.length > 0 ? '🌿' : '🌿', // Emoji placeholder for now
+      image: '🌿', // Emoji placeholder - in production, use actual product images
       images: row.images || [],
       category: row.category,
       chiltanpureUrl: row.chiltanpure_url,
