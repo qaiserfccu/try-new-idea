@@ -18,9 +18,12 @@ export interface Product {
   originalPrice?: number;
   description: string;
   image: string;
+  images?: string[];
   category: string;
   variants?: ProductVariant[];
   discount?: number;
+  chiltanpureUrl?: string;
+  stock?: number;
 }
 
 interface CartItem extends Product {

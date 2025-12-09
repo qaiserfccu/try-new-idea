@@ -12,6 +12,9 @@
 :root.light {
   --background: #ffffff;
   --foreground: #14532d;
+  --text-primary-light: #166534;
+  --text-secondary-light: #15803d;
+  --text-muted-light: #16a34a;
 }
 
 @theme inline {
@@ -127,4 +130,38 @@ body {
   background-size: 1000px 100%;
   animation: shimmer 3s infinite;
   pointer-events: none;
+}
+
+/* Light mode text color improvements for better contrast */
+:root.light .text-green-100 {
+  color: #166534;
+}
+
+:root.light .text-green-200 {
+  color: #15803d;
+}
+
+:root.light .text-green-300 {
+  color: #16a34a;
+}
+
+:root.light .text-green-400 {
+  color: #15803d;
+}
+
+/* Replace purple text colors with green in light mode for better readability */
+:root.light .text-purple-100 {
+  color: #166534;
+}
+
+:root.light .text-purple-200 {
+  color: #15803d;
+}
+
+:root.light .text-purple-300 {
+  color: #16a34a;
+}
+
+:root.light .text-purple-400 {
+  color: #15803d;
 }

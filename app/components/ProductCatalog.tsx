@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useCart, Product, ProductVariant } from '../context/CartContext';
 
 export default function ProductCatalog() {
@@ -127,23 +128,33 @@ export default function ProductCatalog() {
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold gradient-text">
-                      Rs. {selectedVariants[product.id]?.price || product.price}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-purple-400 line-through ml-2">
-                        Rs. {selectedVariants[product.id]?.originalPrice || product.originalPrice}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-2xl font-bold gradient-text">
+                        Rs. {selectedVariants[product.id]?.price || product.price}
                       </span>
-                    )}
+                      {product.originalPrice && (
+                        <span className="text-sm text-purple-400 line-through ml-2">
+                          Rs. {selectedVariants[product.id]?.originalPrice || product.originalPrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition"
-                  >
-                    Add to Cart
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="flex-1 purple-gradient text-white px-4 py-2 rounded-full hover:opacity-90 transition font-semibold text-sm"
+                    >
+                      Add to Cart
+                    </button>
+                    <Link
+                      href={`/products/${product.id}`}
+                      className="flex-1 glass text-white px-4 py-2 rounded-full hover:bg-white/20 transition font-semibold text-sm text-center"
+                    >
+                      View Details →
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>

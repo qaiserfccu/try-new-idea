@@ -5,18 +5,18 @@ export async function GET() {
   try {
     const result = await pool.query(`
       SELECT
-        p.*,
-        json_agg(
-          json_build_object(
-            'id', pv.variant_id,
-            'name', pv.name,
-            'price', pv.price,
-            'originalPrice', pv.original_price
-          )
-        ) FILTER (WHERE pv.id IS NOT NULL) as variants
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.original_price,
+        p.chiltanpure_url,
+        p.images,
+        p.category,
+        p.stock,
+        p.is_available
       FROM products p
-      LEFT JOIN product_variants pv ON p.id = pv.product_id
-      GROUP BY p.id
+      WHERE p.is_available = TRUE
       ORDER BY p.id
     `);
 
@@ -26,10 +26,15 @@ export async function GET() {
       price: parseFloat(row.price),
       originalPrice: row.original_price ? parseFloat(row.original_price) : undefined,
       description: row.description,
-      image: row.image,
+      image: '🌿', // Emoji placeholder - in production, use actual product images
+      images: row.images || [],
       category: row.category,
-      discount: row.discount,
-      variants: row.variants || [],
+      chiltanpureUrl: row.chiltanpure_url,
+      stock: row.stock,
+      discount: row.original_price && row.price < row.original_price 
+        ? Math.round(((parseFloat(row.original_price) - parseFloat(row.price)) / parseFloat(row.original_price)) * 100)
+        : undefined,
+      variants: [], // Variants would come from a separate join if needed
     }));
 
     return NextResponse.json(products);
