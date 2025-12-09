@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Create new user
     const result = await pool.query(
-      'INSERT INTO users (name, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING *',
+      'INSERT INTO users (name, email, password, phone, updated_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
       [name, email, password, phone]
     );
 

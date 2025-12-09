@@ -7,10 +7,10 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Insert test users with different roles
 -- Password for all test users: "password123"
-INSERT INTO users (name, email, password) VALUES
-    ('Admin User', 'admin@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
-    ('Regular User', 'user@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
-    ('Manager User', 'manager@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
+INSERT INTO users (name, email, password, updated_at) VALUES
+    ('Admin User', 'admin@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW()),
+    ('Regular User', 'user@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW()),
+    ('Manager User', 'manager@trynewidea.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample products (ChiltanPure organic products)
