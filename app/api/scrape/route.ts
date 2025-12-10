@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../lib/db';
-import { CHILTANPURE_BASE_URL, CHILTANPURE_REFERRAL_CODE } from '../../../lib/constants';
+import { CHILTANPURE_BASE_URL, CHILTANPURE_REFERRAL_CODE } from '../../lib/constants';
 
 interface ScrapedProduct {
   name: string;

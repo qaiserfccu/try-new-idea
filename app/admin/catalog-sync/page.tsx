@@ -44,7 +44,7 @@ export default function CatalogSyncPage() {
     }
   };
 
-  const handleImportProduct = async (product: Product) => {
+  const handleImportProduct = async () => {
     try {
       // Trigger actual import without dryRun
       const response = await fetch('/api/scrape', {
