@@ -52,8 +52,45 @@ export default function CatalogSyncPage() {
     } catch (error) {
       console.error('Sync error:', error);
       setSyncStatus('Error during synchronization. Please try again.');
+      // Call the scraping API with dryRun to preview products
+      const response = await fetch('/api/scrape?dryRun=true');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to sync products');
+      }
+      
+      setProducts(data.products || []);
+      setSyncStatus(`Successfully synced ${data.productsScraped} products from ChiltanPure!`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setSyncStatus(`Error syncing products: ${errorMessage}`);
+      console.error('Sync error:', error);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleImportProduct = async () => {
+    try {
+      // Trigger actual import without dryRun
+      const response = await fetch('/api/scrape', {
+        method: 'POST'
+      });
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to import products');
+      }
+      
+      alert(`Import successful!\nCreated: ${data.created}\nUpdated: ${data.updated}\nErrors: ${data.errors}`);
+      
+      // Refresh the products list
+      await handleSync();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Error importing products: ${errorMessage}`);
+      console.error('Import error:', error);
     }
   };
 
@@ -106,6 +143,83 @@ export default function CatalogSyncPage() {
                 <div className="text-2xl font-bold text-yellow-600">{syncResult.updatedProducts}</div>
                 <div className="text-sm text-gray-600">Updated Products</div>
               </div>
+        {/* Products List */}
+        {products.length > 0 && (
+          <div className="glass-card rounded-2xl p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">
+                Synced Products ({products.length})
+              </h2>
+              <button
+                onClick={handleImportProduct}
+                className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition font-semibold shadow-lg"
+              >
+                ✓ Import All Products to Store
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {products.map((product, index) => (
+                <div 
+                  key={index}
+                  className="glass rounded-xl p-6 border border-green-500/20 hover:border-green-500/40 transition"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold text-white">{product.name}</h3>
+                    <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">
+                      {product.category}
+                    </span>
+                  </div>
+                  
+                  <p className="text-green-200 text-sm mb-4 line-clamp-2">
+                    {product.description}
+                  </p>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-300 text-sm">Price:</span>
+                      <div className="flex items-center gap-2">
+                        {product.originalPrice && (
+                          <span className="text-green-400 text-sm line-through">
+                            Rs. {product.originalPrice}
+                          </span>
+                        )}
+                        <span className="text-white font-bold text-lg">
+                          Rs. {product.price}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-300 text-sm">Stock:</span>
+                      <span className="text-white font-semibold">
+                        {product.stock} units
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <p className="text-green-300 text-xs mb-1">ChiltanPure URL:</p>
+                    <a 
+                      href={product.chiltanpureUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-400 hover:text-green-300 text-xs break-all underline"
+                    >
+                      {product.chiltanpureUrl}
+                    </a>
+                  </div>
+                  
+                  <a 
+                    href={product.chiltanpureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-green-500/20 text-green-300 px-4 py-2 rounded-lg hover:bg-green-500/30 transition font-semibold text-center block"
+                  >
+                    🔗 View on ChiltanPure
+                  </a>
+                </div>
+              ))}
             </div>
 
             {syncResult.errors.length > 0 && (

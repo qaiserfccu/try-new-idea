@@ -12,7 +12,9 @@
     "prisma:studio": "prisma studio",
     "db:init": "node scripts/db-init.js",
     "catalog-sync": "npx tsx scripts/catalog-sync-daemon.ts",
-    "catalog-sync-once": "npx tsx scripts/catalog-sync-daemon.ts once"
+    "catalog-sync-once": "npx tsx scripts/catalog-sync-daemon.ts once",
+    "scrape": "node scripts/scrape-daemon.js",
+    "scrape:once": "curl http://localhost:3100/api/scrape"
   },
   "dependencies": {
     "@prisma/client": "^7.1.0",
