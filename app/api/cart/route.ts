@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Check if item already exists in cart
     const existing = await pool.query(
-      'SELECT * FROM cart_items WHERE user_id = $1 AND product_id = $2 AND (variant_id = $3 OR (variant_id IS NULL AND $3 IS NULL))',
+      'SELECT id, quantity FROM cart_items WHERE user_id = $1 AND product_id = $2 AND (variant_id = $3 OR (variant_id IS NULL AND $3 IS NULL))',
       [userId, productId, variantId]
     );
 
