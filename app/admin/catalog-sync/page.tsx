@@ -25,65 +25,46 @@ export default function CatalogSyncPage() {
     setSyncStatus('Syncing products from ChiltanPure...');
     
     try {
-      // In a real implementation, this would fetch from ChiltanPure API
-      // For now, we'll simulate with sample data
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the scraping API with dryRun to preview products
+      const response = await fetch('/api/scrape?dryRun=true');
+      const data = await response.json();
       
-      const sampleProducts: Product[] = [
-        {
-          name: 'Organic Honey 500g',
-          description: 'Pure organic honey sourced from the finest beehives in Pakistan. Rich in antioxidants and natural sweetness.',
-          price: 1500,
-          originalPrice: 1800,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/organic-honey`,
-          images: ['https://chiltanpure.com/cdn/shop/products/organic-honey-500g.jpg'],
-          category: 'Food & Beverages',
-          stock: 50
-        },
-        {
-          name: 'Extra Virgin Olive Oil',
-          description: 'Cold-pressed extra virgin olive oil from organic farms. Perfect for cooking and salads.',
-          price: 2500,
-          originalPrice: 3000,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/olive-oil`,
-          images: ['https://chiltanpure.com/cdn/shop/products/olive-oil.jpg'],
-          category: 'Food & Beverages',
-          stock: 30
-        },
-        {
-          name: 'Natural Face Serum',
-          description: 'Organic face serum with vitamin C and hyaluronic acid. Anti-aging and hydrating formula.',
-          price: 1800,
-          originalPrice: 2200,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/face-serum`,
-          images: ['https://chiltanpure.com/cdn/shop/products/face-serum.jpg'],
-          category: 'Beauty & Skincare',
-          stock: 40
-        },
-        {
-          name: 'Herbal Hair Oil',
-          description: 'Natural hair oil with coconut, almond, and essential oils. Promotes hair growth and shine.',
-          price: 1200,
-          originalPrice: 1500,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/hair-oil`,
-          images: ['https://chiltanpure.com/cdn/shop/products/hair-oil.jpg'],
-          category: 'Hair Care',
-          stock: 60
-        },
-      ];
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to sync products');
+      }
       
-      setProducts(sampleProducts);
-      setSyncStatus(`Successfully synced ${sampleProducts.length} products from ChiltanPure!`);
+      setProducts(data.products || []);
+      setSyncStatus(`Successfully synced ${data.productsScraped} products from ChiltanPure!`);
     } catch (error) {
-      setSyncStatus('Error syncing products. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setSyncStatus(`Error syncing products: ${errorMessage}`);
+      console.error('Sync error:', error);
     } finally {
       setSyncing(false);
     }
   };
 
   const handleImportProduct = async (product: Product) => {
-    // In a real implementation, this would save to database via API
-    alert(`Importing: ${product.name}\nPrice: Rs. ${product.price}\nURL: ${product.chiltanpureUrl}`);
+    try {
+      // Trigger actual import without dryRun
+      const response = await fetch('/api/scrape', {
+        method: 'POST'
+      });
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to import products');
+      }
+      
+      alert(`Import successful!\nCreated: ${data.created}\nUpdated: ${data.updated}\nErrors: ${data.errors}`);
+      
+      // Refresh the products list
+      await handleSync();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Error importing products: ${errorMessage}`);
+      console.error('Import error:', error);
+    }
   };
 
   return (
@@ -128,9 +109,17 @@ export default function CatalogSyncPage() {
         {/* Products List */}
         {products.length > 0 && (
           <div className="glass-card rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Synced Products ({products.length})
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">
+                Synced Products ({products.length})
+              </h2>
+              <button
+                onClick={handleImportProduct}
+                className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition font-semibold shadow-lg"
+              >
+                ✓ Import All Products to Store
+              </button>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {products.map((product, index) => (
@@ -184,12 +173,14 @@ export default function CatalogSyncPage() {
                     </a>
                   </div>
                   
-                  <button
-                    onClick={() => handleImportProduct(product)}
-                    className="w-full purple-gradient text-white px-4 py-2 rounded-lg hover:opacity-90 transition font-semibold"
+                  <a 
+                    href={product.chiltanpureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-green-500/20 text-green-300 px-4 py-2 rounded-lg hover:bg-green-500/30 transition font-semibold text-center block"
                   >
-                    ✓ Import to Store
-                  </button>
+                    🔗 View on ChiltanPure
+                  </a>
                 </div>
               ))}
             </div>
