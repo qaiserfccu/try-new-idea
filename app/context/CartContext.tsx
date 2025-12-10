@@ -72,18 +72,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       const cartItems: CartItem[] = data.cartItems.map((item: any) => ({
-        id: item.productId,
+        id: item.product.id,
         name: item.product.name,
         price: parseFloat(item.product.price),
         description: '', // We'll need to add this to the API response
-        image: '', // We'll need to add this to the API response
-        category: '', // We'll need to add this to the API response
+        image: item.product.images?.[0] || '', // Use first image from array
+        images: item.product.images,
+        category: item.product.category || '',
         quantity: item.quantity,
-        selectedVariant: item.variant ? {
-          id: item.variant.id,
-          name: item.variant.name,
-          price: parseFloat(item.variant.price),
-        } : undefined,
       }));
 
       setCart(cartItems);
@@ -122,7 +118,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      const response = await fetch(`/api/cart?userId=${user.id}&productId=${productId}&variantId=${variantId || ''}`, {
+      const response = await fetch(`/api/cart?userId=${user.id}&productId=${productId}${variantId ? `&variantId=${variantId}` : ''}`, {
         method: 'DELETE',
       });
 

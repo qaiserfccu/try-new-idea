@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '../../../lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,30 +10,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    const result = await pool.query(`
-      SELECT ci.*, p.name, p.price, pv.name as variant_name, pv.price as variant_price
-      FROM cart_items ci
-      JOIN products p ON ci.product_id = p.id
-      LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-      WHERE ci.user_id = $1
-      ORDER BY ci.created_at DESC
-    `, [userId]);
+    // Get user's cart
+    const cart = await prisma.cart.findFirst({
+      where: { userId: parseInt(userId) },
+      include: {
+        cartItems: {
+          include: {
+            product: true,
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
 
-    const cartItems = result.rows.map((row: any) => ({
-      id: row.id,
-      productId: row.product_id,
-      variantId: row.variant_id,
-      quantity: row.quantity,
+    if (!cart) {
+      return NextResponse.json({ cartItems: [] });
+    }
+
+    const cartItems = cart.cartItems.map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      quantity: item.quantity,
       product: {
-        id: row.product_id,
-        name: row.name,
-        price: row.price,
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        images: item.product.images,
+        category: item.product.category,
       },
-      variant: row.variant_id ? {
-        id: row.variant_id,
-        name: row.variant_name,
-        price: row.variant_price,
-      } : null,
     }));
 
     return NextResponse.json({ cartItems });
@@ -45,31 +49,46 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, productId, variantId, quantity } = await request.json();
+    const { userId, productId, quantity } = await request.json();
 
     if (!userId || !productId) {
       return NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
     }
 
-    // Check if item already exists in cart
-    const existing = await pool.query(
-      'SELECT * FROM cart_items WHERE user_id = $1 AND product_id = $2 AND (variant_id = $3 OR (variant_id IS NULL AND $3 IS NULL))',
-      [userId, productId, variantId]
-    );
+    // Get or create user's cart
+    let cart = await prisma.cart.findFirst({
+      where: { userId: parseInt(userId) }
+    });
 
-    if (existing.rows.length > 0) {
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { userId: parseInt(userId) }
+      });
+    }
+
+    // Check if item already exists in cart
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId: parseInt(productId),
+      }
+    });
+
+    if (existingItem) {
       // Update quantity
-      const newQuantity = existing.rows[0].quantity + (quantity || 1);
-      await pool.query(
-        'UPDATE cart_items SET quantity = $1 WHERE id = $2',
-        [newQuantity, existing.rows[0].id]
-      );
+      await prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: existingItem.quantity + (quantity || 1) }
+      });
     } else {
       // Add new item
-      await pool.query(
-        'INSERT INTO cart_items (user_id, product_id, variant_id, quantity) VALUES ($1, $2, $3, $4)',
-        [userId, productId, variantId, quantity || 1]
-      );
+      await prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: parseInt(productId),
+          quantity: quantity || 1,
+        }
+      });
     }
 
     return NextResponse.json({ success: true });
@@ -81,24 +100,38 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { userId, productId, variantId, quantity } = await request.json();
+    const { userId, productId, quantity } = await request.json();
 
     if (!userId || !productId || quantity === undefined) {
       return NextResponse.json({ error: 'User ID, Product ID, and quantity required' }, { status: 400 });
     }
 
+    // Get user's cart
+    const cart = await prisma.cart.findFirst({
+      where: { userId: parseInt(userId) }
+    });
+
+    if (!cart) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+    }
+
     if (quantity <= 0) {
       // Remove item if quantity is 0 or less
-      await pool.query(
-        'DELETE FROM cart_items WHERE user_id = $1 AND product_id = $2 AND (variant_id = $3 OR (variant_id IS NULL AND $3 IS NULL))',
-        [userId, productId, variantId]
-      );
+      await prisma.cartItem.deleteMany({
+        where: {
+          cartId: cart.id,
+          productId: parseInt(productId),
+        }
+      });
     } else {
       // Update quantity
-      await pool.query(
-        'UPDATE cart_items SET quantity = $1 WHERE user_id = $2 AND product_id = $3 AND (variant_id = $4 OR (variant_id IS NULL AND $4 IS NULL))',
-        [quantity, userId, productId, variantId]
-      );
+      await prisma.cartItem.updateMany({
+        where: {
+          cartId: cart.id,
+          productId: parseInt(productId),
+        },
+        data: { quantity }
+      });
     }
 
     return NextResponse.json({ success: true });
@@ -108,20 +141,36 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const productId = searchParams.get('productId');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    if (!userId || !productId) {
+      return NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
     }
 
-    // Clear all cart items for the user
-    await pool.query('DELETE FROM cart_items WHERE user_id = $1', [userId]);
+    // Get user's cart
+    const cart = await prisma.cart.findFirst({
+      where: { userId: parseInt(userId) }
+    });
+
+    if (!cart) {
+      return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
+    }
+
+    // Remove item from cart
+    await prisma.cartItem.deleteMany({
+      where: {
+        cartId: cart.id,
+        productId: parseInt(productId),
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error clearing cart:', error);
-    return NextResponse.json({ error: 'Failed to clear cart' }, { status: 500 });
+    console.error('Error removing from cart:', error);
+    return NextResponse.json({ error: 'Failed to remove from cart' }, { status: 500 });
   }
 }

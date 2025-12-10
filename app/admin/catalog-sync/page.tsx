@@ -2,211 +2,148 @@
 
 import { useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-import { CHILTANPURE_REFERRAL_URL } from '../../lib/constants';
 
 interface Product {
+  id?: number;
   name: string;
   description: string;
   price: number;
-  originalPrice?: number;
-  chiltanpureUrl: string;
-  images: string[];
+  original_price?: number;
+  image: string;
   category: string;
-  stock: number;
+  discount: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface SyncResult {
+  totalProducts: number;
+  newProducts: number;
+  updatedProducts: number;
+  errors: string[];
 }
 
 export default function CatalogSyncPage() {
   const [syncing, setSyncing] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [syncStatus, setSyncStatus] = useState<string>('');
+  const [lastSync, setLastSync] = useState<string>('');
 
   const handleSync = async () => {
     setSyncing(true);
-    setSyncStatus('Syncing products from ChiltanPure...');
-    
+    setSyncStatus('Starting catalog synchronization...');
+    setSyncResult(null);
+
     try {
-      // In a real implementation, this would fetch from ChiltanPure API
-      // For now, we'll simulate with sample data
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const sampleProducts: Product[] = [
-        {
-          name: 'Organic Honey 500g',
-          description: 'Pure organic honey sourced from the finest beehives in Pakistan. Rich in antioxidants and natural sweetness.',
-          price: 1500,
-          originalPrice: 1800,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/organic-honey`,
-          images: ['https://chiltanpure.com/cdn/shop/products/organic-honey-500g.jpg'],
-          category: 'Food & Beverages',
-          stock: 50
-        },
-        {
-          name: 'Extra Virgin Olive Oil',
-          description: 'Cold-pressed extra virgin olive oil from organic farms. Perfect for cooking and salads.',
-          price: 2500,
-          originalPrice: 3000,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/olive-oil`,
-          images: ['https://chiltanpure.com/cdn/shop/products/olive-oil.jpg'],
-          category: 'Food & Beverages',
-          stock: 30
-        },
-        {
-          name: 'Natural Face Serum',
-          description: 'Organic face serum with vitamin C and hyaluronic acid. Anti-aging and hydrating formula.',
-          price: 1800,
-          originalPrice: 2200,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/face-serum`,
-          images: ['https://chiltanpure.com/cdn/shop/products/face-serum.jpg'],
-          category: 'Beauty & Skincare',
-          stock: 40
-        },
-        {
-          name: 'Herbal Hair Oil',
-          description: 'Natural hair oil with coconut, almond, and essential oils. Promotes hair growth and shine.',
-          price: 1200,
-          originalPrice: 1500,
-          chiltanpureUrl: `${CHILTANPURE_REFERRAL_URL}/products/hair-oil`,
-          images: ['https://chiltanpure.com/cdn/shop/products/hair-oil.jpg'],
-          category: 'Hair Care',
-          stock: 60
-        },
-      ];
-      
-      setProducts(sampleProducts);
-      setSyncStatus(`Successfully synced ${sampleProducts.length} products from ChiltanPure!`);
+      // Step 1: Fetch products from ChiltanPure API/website
+      setSyncStatus('Fetching products from ChiltanPure...');
+      const response = await fetch('/api/admin/catalog-sync', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setSyncResult(result);
+      setLastSync(new Date().toLocaleString());
+      setSyncStatus('Catalog synchronization completed successfully!');
     } catch (error) {
-      setSyncStatus('Error syncing products. Please try again.');
+      console.error('Sync error:', error);
+      setSyncStatus('Error during synchronization. Please try again.');
     } finally {
       setSyncing(false);
     }
   };
 
-  const handleImportProduct = async (product: Product) => {
-    // In a real implementation, this would save to database via API
-    alert(`Importing: ${product.name}\nPrice: Rs. ${product.price}\nURL: ${product.chiltanpureUrl}`);
-  };
-
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="glass-card rounded-2xl p-8">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            ChiltanPure Catalog Sync
-          </h1>
-          <p className="text-green-200 mb-6">
-            Sync products directly from ChiltanPure.com with referral tracking.
-            All product images and information will match the source.
-          </p>
-          
-          <div className="glass rounded-lg p-4 mb-4 bg-green-500/10 border-green-500/30">
-            <p className="text-sm font-medium text-green-300 mb-2">Referral URL:</p>
-            <code className="text-white font-mono text-sm break-all block bg-black/30 p-3 rounded">
-              {CHILTANPURE_REFERRAL_URL}
-            </code>
-          </div>
-
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Catalog Synchronization</h1>
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="purple-gradient text-white px-8 py-3 rounded-full hover:opacity-90 transition disabled:opacity-50 font-semibold shadow-lg"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            {syncing ? '🔄 Syncing...' : '🔄 Sync Products from ChiltanPure'}
+            {syncing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Syncing...</span>
+              </>
+            ) : (
+              <span>Sync Catalog</span>
+            )}
           </button>
-
-          {syncStatus && (
-            <div className={`mt-4 p-4 rounded-lg ${
-              syncStatus.includes('Error') 
-                ? 'bg-red-500/20 border border-red-500 text-red-300'
-                : 'bg-green-500/20 border border-green-500 text-green-300'
-            }`}>
-              {syncStatus}
-            </div>
-          )}
         </div>
 
-        {/* Products List */}
-        {products.length > 0 && (
-          <div className="glass-card rounded-2xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Synced Products ({products.length})
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {products.map((product, index) => (
-                <div 
-                  key={index}
-                  className="glass rounded-xl p-6 border border-green-500/20 hover:border-green-500/40 transition"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold text-white">{product.name}</h3>
-                    <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">
-                      {product.category}
-                    </span>
-                  </div>
-                  
-                  <p className="text-green-200 text-sm mb-4 line-clamp-2">
-                    {product.description}
-                  </p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-300 text-sm">Price:</span>
-                      <div className="flex items-center gap-2">
-                        {product.originalPrice && (
-                          <span className="text-green-400 text-sm line-through">
-                            Rs. {product.originalPrice}
-                          </span>
-                        )}
-                        <span className="text-white font-bold text-lg">
-                          Rs. {product.price}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-300 text-sm">Stock:</span>
-                      <span className="text-white font-semibold">
-                        {product.stock} units
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <p className="text-green-300 text-xs mb-1">ChiltanPure URL:</p>
-                    <a 
-                      href={product.chiltanpureUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-400 hover:text-green-300 text-xs break-all underline"
-                    >
-                      {product.chiltanpureUrl}
-                    </a>
-                  </div>
-                  
-                  <button
-                    onClick={() => handleImportProduct(product)}
-                    className="w-full purple-gradient text-white px-4 py-2 rounded-lg hover:opacity-90 transition font-semibold"
-                  >
-                    ✓ Import to Store
-                  </button>
-                </div>
-              ))}
+        {/* Status Display */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Sync Status</h2>
+          <div className="space-y-2">
+            <p className="text-gray-600">{syncStatus}</p>
+            {lastSync && (
+              <p className="text-sm text-gray-500">Last sync: {lastSync}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Results Display */}
+        {syncResult && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Sync Results</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{syncResult.totalProducts}</div>
+                <div className="text-sm text-gray-600">Total Products</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{syncResult.newProducts}</div>
+                <div className="text-sm text-gray-600">New Products</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{syncResult.updatedProducts}</div>
+                <div className="text-sm text-gray-600">Updated Products</div>
+              </div>
             </div>
+
+            {syncResult.errors.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-red-600 mb-2">Errors</h3>
+                <ul className="list-disc list-inside text-red-600">
+                  {syncResult.errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Info Section */}
-        <div className="glass-card rounded-2xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            ℹ️ About Catalog Sync
-          </h2>
-          <div className="space-y-3 text-green-200">
-            <p>• All products synced from ChiltanPure will include the referral code</p>
-            <p>• Product images and information will match ChiltanPure.com exactly</p>
-            <p>• Prices are displayed in Pakistani Rupees (PKR Rs.)</p>
-            <p>• Stock levels can be adjusted after import</p>
-            <p>• Products maintain a link to their source on ChiltanPure</p>
+        {/* Information Panel */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
+          <h3 className="text-xl font-semibold mb-4">About Catalog Sync</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">What gets synchronized:</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Product names and descriptions</li>
+                <li>• Pricing information</li>
+                <li>• Product images</li>
+                <li>• Categories and tags</li>
+                <li>• Stock availability</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Sync behavior:</h4>
+              <ul className="text-sm space-y-1">
+                <li>• New products are added automatically</li>
+                <li>• Existing products are updated</li>
+                <li>• Removed products stay in catalog</li>
+                <li>• No products are deleted automatically</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

@@ -10,12 +10,17 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "db:init": "node scripts/db-init.js"
+    "db:init": "node scripts/db-init.js",
+    "catalog-sync": "npx tsx scripts/catalog-sync-daemon.ts",
+    "catalog-sync-once": "npx tsx scripts/catalog-sync-daemon.ts once"
   },
   "dependencies": {
     "@prisma/client": "^7.1.0",
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
     "next": "16.0.7",
+    "node-cron": "^4.2.1",
     "pg": "^8.16.3",
     "prisma": "^7.1.0",
     "react": "19.2.0",
@@ -32,6 +37,7 @@
     "eslint-config-next": "16.0.3",
     "node-fetch": "^3.3.2",
     "tailwindcss": "^4",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }
