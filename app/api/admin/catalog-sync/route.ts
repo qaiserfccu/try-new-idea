@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/lib/generated/prisma';
+import prisma from '@/lib/prisma';
 
 // Simple in-memory status tracking (in production, use Redis or database)
 let lastSyncTime: Date | null = null;
 let isRunning = false;
 let lastSyncResult: any = null;
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   console.log('Catalog sync API called - testing Prisma direct import');

@@ -39,21 +39,18 @@ export class ChiltanPureScraper {
 
       const products: ScrapedProduct[] = [];
 
-      // Scrape first product to test
-      if (productUrls.length > 0) {
-        console.log('Testing scrape of first product:', productUrls[0]);
+      for (const url of productUrls) {
         try {
-          const product = await this.scrapeProduct(productUrls[0]);
+          const product = await this.scrapeProduct(url);
           if (product) {
-            console.log('Successfully scraped product:', product.title, 'Price:', product.price);
             products.push(product);
-          } else {
-            console.log('Product scrape returned null');
           }
         } catch (error) {
-          console.error('Error scraping first product:', error);
-          throw error;
+          console.error('Error scraping product:', url, error);
         }
+
+        // Be polite to the source site
+        await this.delay(300);
       }
 
       console.log(`Successfully scraped ${products.length} products`);

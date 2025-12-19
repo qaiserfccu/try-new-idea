@@ -68,15 +68,17 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- Insert roles
-INSERT INTO roles (name) VALUES ('admin'), ('user'), ('manager')
+-- Insert roles (include updated_at to be compatible with older schemas that require it)
+INSERT INTO roles (name, updated_at) VALUES ('admin', NOW()), ('user', NOW()), ('manager', NOW())
 ON CONFLICT (name) DO NOTHING;
 
 -- Insert test users with different roles
 -- Password for all test users: "password123"
-INSERT INTO users (name, email, password, phone, role_id) VALUES
-    ('Admin User', 'admin@trynewidea.com', 'Admin123', '+92 300 1111111', 1),
-    ('Regular User', 'user@trynewidea.com', 'User123', '+92 300 2222222', 2),
-    ('Manager User', 'manager@trynewidea.com', 'Manager123', '+92 300 3333333', 3)
+-- Insert test users with different roles (resolve role ids by name to be resilient)
+INSERT INTO users (name, email, password, phone, role_id, updated_at) VALUES
+    ('Admin User', 'admin@trynewidea.com', 'Admin123', '+92 300 1111111', (SELECT id FROM roles WHERE name='admin'), NOW()),
+    ('Regular User', 'user@trynewidea.com', 'User123', '+92 300 2222222', (SELECT id FROM roles WHERE name='user'), NOW()),
+    ('Manager User', 'manager@trynewidea.com', 'Manager123', '+92 300 3333333', (SELECT id FROM roles WHERE name='manager'), NOW())
 ON CONFLICT (email) DO NOTHING;
 
 -- Create indexes for better performance
@@ -189,4 +191,33 @@ CREATE TABLE IF NOT EXISTS cart_items (
 CREATE INDEX IF NOT EXISTS idx_product_variants_product_id ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_cart_items_product_id ON cart_items(product_id);
+
+-- Ensure updated_at columns have a default and fix any existing NULLs (helps older schemas)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='roles' AND column_name='updated_at') THEN
+        ALTER TABLE roles ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE roles SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='updated_at') THEN
+        ALTER TABLE users ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='updated_at') THEN
+        ALTER TABLE products ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE products SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='product_variants' AND column_name='updated_at') THEN
+        ALTER TABLE product_variants ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE product_variants SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='cart_items' AND column_name='updated_at') THEN
+        ALTER TABLE cart_items ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE cart_items SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL;
+    END IF;
+END$$;
 

@@ -1,22 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { logApiResponse, logError } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const userIdNum = userId ? Number(userId) : NaN;
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    if (!userId || Number.isNaN(userIdNum)) {
+      const resp = NextResponse.json({ error: 'User ID required' }, { status: 400 });
+      logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 400, body: JSON.stringify({ error: 'User ID required' }), message: 'User ID required' })
+      return resp;
     }
 
-    // Get user's cart
     const cart = await prisma.cart.findFirst({
-      where: { userId: parseInt(userId) },
+      where: { userId: userIdNum },
       include: {
         cartItems: {
           include: {
             product: true,
+            variant: true,
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -24,12 +28,16 @@ export async function GET(request: NextRequest) {
     });
 
     if (!cart) {
-      return NextResponse.json({ cartItems: [] });
+      const payload = { cartItems: [] };
+      const resp = NextResponse.json(payload);
+      logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 200, body: JSON.stringify(payload), userId: userIdNum, message: 'Empty cart' })
+      return resp;
     }
 
     const cartItems = cart.cartItems.map((item) => ({
       id: item.id,
       productId: item.productId,
+      variantId: item.variantId,
       quantity: item.quantity,
       product: {
         id: item.product.id,
@@ -38,111 +46,134 @@ export async function GET(request: NextRequest) {
         images: item.product.images,
         category: item.product.category,
       },
+      variant: item.variant
     }));
 
-    return NextResponse.json({ cartItems });
+    const payload = { cartItems };
+    const resp = NextResponse.json(payload);
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 200, body: JSON.stringify(payload), userId: userIdNum, message: 'Fetched cart' })
+    return resp;
   } catch (error) {
-    console.error('Error loading cart:', error);
-    return NextResponse.json({ error: 'Failed to load cart' }, { status: 500 });
+    logError(error, { source: 'server', url: new URL(request.url).pathname, message: 'Error loading cart' })
+    const resp = NextResponse.json({ error: 'Failed to load cart' }, { status: 500 });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 500, body: JSON.stringify({ error: 'Failed to load cart' }), message: 'Failed to load cart' })
+    return resp;
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, productId, quantity } = await request.json();
+    const { userId, productId, variantId, quantity } = await request.json();
 
-    if (!userId || !productId) {
-      return NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
+    const userIdNum = Number(userId);
+    const productIdNum = Number(productId);
+    const variantIdNum = variantId === undefined || variantId === null ? null : Number(variantId);
+
+    if (!userId || !productId || Number.isNaN(userIdNum) || Number.isNaN(productIdNum) || (variantIdNum !== null && Number.isNaN(variantIdNum))) {
+      const resp = NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
+      logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 400, body: JSON.stringify({ error: 'User ID and Product ID required' }), message: 'Invalid add-to-cart payload' })
+      return resp;
     }
 
-    // Get or create user's cart
+    const quantityToAdd = Math.max(1, Number(quantity) || 1);
+
     let cart = await prisma.cart.findFirst({
-      where: { userId: parseInt(userId) }
+      where: { userId: userIdNum }
     });
 
     if (!cart) {
       cart = await prisma.cart.create({
-        data: { userId: parseInt(userId) }
+        data: { userId: userIdNum }
       });
     }
-    // Check if item already exists in cart
-    const existing = await pool.query(
-      'SELECT id, quantity FROM cart_items WHERE user_id = $1 AND product_id = $2 AND (variant_id = $3 OR (variant_id IS NULL AND $3 IS NULL))',
-      [userId, productId, variantId]
-    );
 
-    // Check if item already exists in cart
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
-        productId: parseInt(productId),
+        productId: productIdNum,
+        variantId: variantIdNum,
       }
     });
 
     if (existingItem) {
-      // Update quantity
       await prisma.cartItem.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + (quantity || 1) }
+        data: { quantity: existingItem.quantity + quantityToAdd }
       });
     } else {
-      // Add new item
       await prisma.cartItem.create({
         data: {
           cartId: cart.id,
-          productId: parseInt(productId),
-          quantity: quantity || 1,
+          productId: productIdNum,
+          variantId: variantIdNum,
+          quantity: quantityToAdd,
         }
       });
     }
 
-    return NextResponse.json({ success: true });
+    const resp = NextResponse.json({ success: true });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 200, body: JSON.stringify({ success: true }), userId: userIdNum, message: 'Added to cart' })
+    return resp;
   } catch (error) {
-    console.error('Error adding to cart:', error);
-    return NextResponse.json({ error: 'Failed to add to cart' }, { status: 500 });
+    logError(error, { source: 'server', url: new URL(request.url).pathname, message: 'Error adding to cart' })
+    const resp = NextResponse.json({ error: 'Failed to add to cart' }, { status: 500 });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 500, body: JSON.stringify({ error: 'Failed to add to cart' }), message: 'Failed to add to cart' })
+    return resp;
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const { userId, productId, quantity } = await request.json();
+    const { userId, productId, variantId, quantity } = await request.json();
 
-    if (!userId || !productId || quantity === undefined) {
-      return NextResponse.json({ error: 'User ID, Product ID, and quantity required' }, { status: 400 });
+    const userIdNum = Number(userId);
+    const productIdNum = Number(productId);
+    const variantIdNum = variantId === undefined || variantId === null ? null : Number(variantId);
+    const nextQuantity = Number(quantity);
+
+    if (!userId || !productId || quantity === undefined || Number.isNaN(userIdNum) || Number.isNaN(productIdNum) || (variantIdNum !== null && Number.isNaN(variantIdNum)) || Number.isNaN(nextQuantity)) {
+      const resp = NextResponse.json({ error: 'User ID, Product ID, and quantity required' }, { status: 400 });
+      logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 400, body: JSON.stringify({ error: 'User ID, Product ID, and quantity required' }), message: 'Invalid update payload' })
+      return resp;
     }
 
-    // Get user's cart
     const cart = await prisma.cart.findFirst({
-      where: { userId: parseInt(userId) }
+      where: { userId: userIdNum }
     });
 
     if (!cart) {
       return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
-    if (quantity <= 0) {
-      // Remove item if quantity is 0 or less
-      await prisma.cartItem.deleteMany({
-        where: {
-          cartId: cart.id,
-          productId: parseInt(productId),
-        }
-      });
+    const existingItem = await prisma.cartItem.findFirst({
+      where: {
+        cartId: cart.id,
+        productId: productIdNum,
+        variantId: variantIdNum,
+      }
+    });
+
+    if (!existingItem) {
+      return NextResponse.json({ error: 'Cart item not found' }, { status: 404 });
+    }
+
+    if (nextQuantity <= 0) {
+      await prisma.cartItem.delete({ where: { id: existingItem.id } });
     } else {
-      // Update quantity
-      await prisma.cartItem.updateMany({
-        where: {
-          cartId: cart.id,
-          productId: parseInt(productId),
-        },
-        data: { quantity }
+      await prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: nextQuantity }
       });
     }
 
-    return NextResponse.json({ success: true });
+    const resp = NextResponse.json({ success: true });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 200, body: JSON.stringify({ success: true }), userId: userIdNum, message: 'Updated cart' })
+    return resp;
   } catch (error) {
-    console.error('Error updating cart:', error);
-    return NextResponse.json({ error: 'Failed to update cart' }, { status: 500 });
+    logError(error, { source: 'server', url: new URL(request.url).pathname, message: 'Error updating cart' })
+    const resp = NextResponse.json({ error: 'Failed to update cart' }, { status: 500 });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 500, body: JSON.stringify({ error: 'Failed to update cart' }), message: 'Failed to update cart' })
+    return resp;
   }
 }
 
@@ -151,31 +182,41 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const productId = searchParams.get('productId');
+    const variantId = searchParams.get('variantId');
 
-    if (!userId || !productId) {
-      return NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
+    const userIdNum = userId ? Number(userId) : NaN;
+    const productIdNum = productId ? Number(productId) : NaN;
+    const variantIdNum = variantId ? Number(variantId) : null;
+
+    if (!userId || !productId || Number.isNaN(userIdNum) || Number.isNaN(productIdNum) || (variantIdNum !== null && Number.isNaN(variantIdNum))) {
+      const resp = NextResponse.json({ error: 'User ID and Product ID required' }, { status: 400 });
+      logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 400, body: JSON.stringify({ error: 'User ID and Product ID required' }), message: 'Invalid delete payload' })
+      return resp;
     }
 
-    // Get user's cart
     const cart = await prisma.cart.findFirst({
-      where: { userId: parseInt(userId) }
+      where: { userId: userIdNum }
     });
 
     if (!cart) {
       return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
     }
 
-    // Remove item from cart
     await prisma.cartItem.deleteMany({
       where: {
         cartId: cart.id,
-        productId: parseInt(productId),
+        productId: productIdNum,
+        variantId: variantIdNum,
       }
     });
 
-    return NextResponse.json({ success: true });
+    const resp = NextResponse.json({ success: true });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 200, body: JSON.stringify({ success: true }), userId: userIdNum, message: 'Removed from cart' })
+    return resp;
   } catch (error) {
-    console.error('Error removing from cart:', error);
-    return NextResponse.json({ error: 'Failed to remove from cart' }, { status: 500 });
+    logError(error, { source: 'server', url: new URL(request.url).pathname, message: 'Error removing from cart' })
+    const resp = NextResponse.json({ error: 'Failed to remove from cart' }, { status: 500 });
+    logApiResponse({ source: 'server', url: new URL(request.url).pathname, status: 500, body: JSON.stringify({ error: 'Failed to remove from cart' }), message: 'Failed to remove from cart' })
+    return resp;
   }
 }

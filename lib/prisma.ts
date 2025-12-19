@@ -30,7 +30,8 @@ if (!isBuildTime) {
     adapter,
     // Enable query logging for easier debugging in non-production runs
     // Set PRISMA_LOG env var to control verbosity if needed
-    log: process.env.PRISMA_LOG ? process.env.PRISMA_LOG.split(',') : (process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'error', 'warn']),
+    // Cast to any since env-derived strings may not match the strict LogLevel type at compile time
+    log: process.env.PRISMA_LOG ? (process.env.PRISMA_LOG.split(',') as any) : (process.env.NODE_ENV === 'production' ? (['error'] as any) : (['query', 'error', 'warn'] as any)),
   });
 
   if (process.env.NODE_ENV !== 'production') {

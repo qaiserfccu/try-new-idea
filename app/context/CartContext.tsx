@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { logApiResponse, logError } from '@/lib/logger';
 import { useAuth } from './AuthContext';
 
 export interface ProductVariant {
@@ -64,10 +65,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const loadCartFromDatabase = async () => {
     if (!user) return;
 
+    const userIdNum = Number(user.id);
+    if (Number.isNaN(userIdNum)) {
+      console.warn('Invalid user id when loading cart, clearing local cart state', user.id);
+      setCart([]);
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/cart?userId=${user.id}`);
+      const response = await fetch(`/api/cart?userId=${userIdNum}`);
       if (!response.ok) {
-        throw new Error('Failed to load cart');
+        // Read body safely and send to centralized logger, then clear cart locally
+        let body = '';
+        try {
+          body = await response.text();
+        } catch (e) {
+          /* ignore */
+        }
+        logApiResponse({ source: 'client', url: `/api/cart?userId=${userIdNum}`, status: response.status, body, userId: userIdNum, level: 'warn', message: 'Failed to load cart (client)' })
+        setCart([]);
+        return;
       }
 
       const data = await response.json();
@@ -84,7 +101,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setCart(cartItems);
     } catch (error) {
-      console.error('Error loading cart from database:', error);
+      logError(error, { source: 'client', url: `/api/cart?userId=${userIdNum}`, userId: userIdNum, message: 'Exception while loading cart' })
     }
   };
 

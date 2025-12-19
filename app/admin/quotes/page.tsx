@@ -9,15 +9,15 @@ interface Quote {
   email: string;
   phone: string | null;
   company: string | null;
-  product_name: string;
+  productName: string;
   quantity: number;
   specifications: string | null;
   budget: number | null;
   timeline: string | null;
   status: 'pending' | 'contacted' | 'quoted' | 'approved' | 'rejected';
   notes: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function AdminQuotesPage() {
@@ -32,7 +32,7 @@ export default function AdminQuotesPage() {
     email: '',
     phone: '',
     company: '',
-    product_name: '',
+    productName: '',
     quantity: 1,
     specifications: '',
     budget: '',
@@ -53,7 +53,14 @@ export default function AdminQuotesPage() {
         throw new Error('Failed to fetch quotes');
       }
       const data = await response.json();
-      setQuotes(data);
+      const normalized = data.map((quote: any) => ({
+        ...quote,
+        productName: quote.productName ?? quote.product_name ?? '',
+        budget: quote.budget !== null && quote.budget !== undefined ? Number(quote.budget) : null,
+        createdAt: quote.createdAt ?? quote.created_at,
+        updatedAt: quote.updatedAt ?? quote.updated_at
+      }));
+      setQuotes(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -66,6 +73,7 @@ export default function AdminQuotesPage() {
     try {
       const data = {
         ...formData,
+        productName: formData.productName,
         quantity: parseInt(formData.quantity.toString()),
         budget: formData.budget ? parseFloat(formData.budget) : null,
         phone: formData.phone || null,
@@ -104,7 +112,7 @@ export default function AdminQuotesPage() {
       email: quote.email,
       phone: quote.phone || '',
       company: quote.company || '',
-      product_name: quote.product_name,
+      productName: quote.productName,
       quantity: quote.quantity,
       specifications: quote.specifications || '',
       budget: quote.budget?.toString() || '',
@@ -141,7 +149,7 @@ export default function AdminQuotesPage() {
       email: '',
       phone: '',
       company: '',
-      product_name: '',
+      productName: '',
       quantity: 1,
       specifications: '',
       budget: '',
@@ -265,8 +273,8 @@ export default function AdminQuotesPage() {
                     <label className="block text-sm font-medium text-gray-700">Product Name</label>
                     <input
                       type="text"
-                      value={formData.product_name}
-                      onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
+                      value={formData.productName}
+                      onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                       required
                     />
@@ -374,7 +382,7 @@ export default function AdminQuotesPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                    {quote.product_name}
+                    {quote.productName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {quote.quantity}
@@ -459,7 +467,7 @@ export default function AdminQuotesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Product</label>
-                    <p className="mt-1 text-sm text-gray-900">{selectedQuote.product_name}</p>
+                    <p className="mt-1 text-sm text-gray-900">{selectedQuote.productName}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Quantity</label>
@@ -512,7 +520,7 @@ export default function AdminQuotesPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Created</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {new Date(selectedQuote.created_at).toLocaleString()}
+                      {new Date(selectedQuote.createdAt).toLocaleString()}
                     </p>
                   </div>
                 </div>

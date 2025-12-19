@@ -25,16 +25,16 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       company,
-      product_name,
       quantity,
       specifications,
       budget,
       timeline,
       notes
     } = body;
+    const productName = body.productName ?? body.product_name; // support legacy snake_case payloads
 
     // Validate required fields
-    if (!name || !email || !product_name || !quantity) {
+    if (!name || !email || !productName || !quantity) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         email,
         phone,
         company,
-        product_name,
+        productName,
         quantity: parseInt(quantity),
         specifications,
         budget: budget ? parseFloat(budget) : null,

@@ -1,266 +1,211 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import AdminLayout from '../../components/AdminLayout';
+import { useState } from "react";
+import AdminLayout from "../../components/AdminLayout";
 
-interface Product {
-  id?: number;
-  name: string;
+type ScrapedProduct = {
+  title: string;
   description: string;
   price: number;
-  original_price?: number;
-  image: string;
+  originalPrice?: number;
   category: string;
-  discount: number;
-  created_at?: string;
-  updated_at?: string;
-}
+  stock?: number;
+  url: string;
+  images: string[];
+  sku?: string;
+};
 
-interface SyncResult {
-  totalProducts: number;
-  newProducts: number;
-  updatedProducts: number;
-  errors: string[];
-}
+type ImportResult = {
+  productsScraped: number;
+  created: number;
+  updated: number;
+  errors: number;
+  timestamp?: string;
+};
 
 export default function CatalogSyncPage() {
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
-  const [syncStatus, setSyncStatus] = useState<string>('');
-  const [lastSync, setLastSync] = useState<string>('');
+  const [importing, setImporting] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string>("");
+  const [lastSync, setLastSync] = useState<string>("");
+  const [products, setProducts] = useState<ScrapedProduct[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
-  const handleSync = async () => {
+  const handlePreview = async () => {
     setSyncing(true);
-    setSyncStatus('Starting catalog synchronization...');
-    setSyncResult(null);
+    setSyncStatus("Fetching latest catalog preview...");
+    setImportResult(null);
 
     try {
-      // Step 1: Fetch products from ChiltanPure API/website
-      setSyncStatus('Fetching products from ChiltanPure...');
-      const response = await fetch('/api/admin/catalog-sync', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setSyncResult(result);
-      setLastSync(new Date().toLocaleString());
-      setSyncStatus('Catalog synchronization completed successfully!');
-    } catch (error) {
-      console.error('Sync error:', error);
-      setSyncStatus('Error during synchronization. Please try again.');
-      // Call the scraping API with dryRun to preview products
-      const response = await fetch('/api/scrape?dryRun=true');
+      const response = await fetch("/api/scrape?dryRun=true");
       const data = await response.json();
-      
+
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to sync products');
+        throw new Error(data.message || "Failed to preview catalog");
       }
-      
+
       setProducts(data.products || []);
-      setSyncStatus(`Successfully synced ${data.productsScraped} products from ChiltanPure!`);
+      setLastSync(new Date().toLocaleString());
+      setSyncStatus(`Preview ready: ${data.productsScraped} products scraped.`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setSyncStatus(`Error syncing products: ${errorMessage}`);
-      console.error('Sync error:', error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setSyncStatus(`Error previewing catalog: ${message}`);
+      console.error("Catalog preview error:", error);
     } finally {
       setSyncing(false);
     }
   };
 
-  const handleImportProduct = async () => {
+  const handleImport = async () => {
+    setImporting(true);
+    setSyncStatus("Importing catalog into the store...");
+
     try {
-      // Trigger actual import without dryRun
-      const response = await fetch('/api/scrape', {
-        method: 'POST'
-      });
+      const response = await fetch("/api/scrape", { method: "POST" });
       const data = await response.json();
-      
+
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to import products');
+        throw new Error(data.message || "Failed to import catalog");
       }
-      
-      alert(`Import successful!\nCreated: ${data.created}\nUpdated: ${data.updated}\nErrors: ${data.errors}`);
-      
-      // Refresh the products list
-      await handleSync();
+
+      setImportResult({
+        productsScraped: data.productsScraped,
+        created: data.created,
+        updated: data.updated,
+        errors: data.errors,
+        timestamp: data.timestamp,
+      });
+      setSyncStatus("Catalog import finished.");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Error importing products: ${errorMessage}`);
-      console.error('Import error:', error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setSyncStatus(`Error importing catalog: ${message}`);
+      console.error("Catalog import error:", error);
+    } finally {
+      setImporting(false);
     }
   };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Catalog Synchronization</h1>
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-          >
-            {syncing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Syncing...</span>
-              </>
-            ) : (
-              <span>Sync Catalog</span>
-            )}
-          </button>
-        </div>
-
-        {/* Status Display */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Sync Status</h2>
-          <div className="space-y-2">
-            <p className="text-gray-600">{syncStatus}</p>
-            {lastSync && (
-              <p className="text-sm text-gray-500">Last sync: {lastSync}</p>
-            )}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Catalog Synchronization</h1>
+            <p className="text-gray-600">Preview and import the latest ChiltanPure catalog.</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handlePreview}
+              disabled={syncing}
+              className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {syncing ? "Fetching..." : "Preview Catalog"}
+            </button>
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {importing ? "Importing..." : "Import to Store"}
+            </button>
           </div>
         </div>
 
-        {/* Results Display */}
-        {syncResult && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Sync Results</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{syncResult.totalProducts}</div>
-                <div className="text-sm text-gray-600">Total Products</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{syncResult.newProducts}</div>
-                <div className="text-sm text-gray-600">New Products</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{syncResult.updatedProducts}</div>
-                <div className="text-sm text-gray-600">Updated Products</div>
-              </div>
-        {/* Products List */}
-        {products.length > 0 && (
-          <div className="glass-card rounded-2xl p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">
-                Synced Products ({products.length})
-              </h2>
-              <button
-                onClick={handleImportProduct}
-                className="purple-gradient text-white px-6 py-2 rounded-full hover:opacity-90 transition font-semibold shadow-lg"
-              >
-                ✓ Import All Products to Store
-              </button>
+        <div className="bg-white rounded-lg shadow p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Sync Status</h2>
+            {lastSync && <p className="text-sm text-gray-500">Last preview: {lastSync}</p>}
+          </div>
+          <p className="text-gray-700 min-h-[24px]">{syncStatus || "Waiting to start..."}</p>
+          {importResult && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+              <Stat label="Scraped" value={importResult.productsScraped} accent="text-blue-600" />
+              <Stat label="Created" value={importResult.created} accent="text-green-600" />
+              <Stat label="Updated" value={importResult.updated} accent="text-yellow-600" />
+              <Stat label="Errors" value={importResult.errors} accent="text-red-600" />
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          )}
+        </div>
+
+        {products.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Scraped Products</h2>
+                <p className="text-sm text-gray-500">Preview of the latest scrape (first {products.length} items)</p>
+              </div>
+              <span className="text-sm text-gray-600">{products.length} items</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((product, index) => (
-                <div 
-                  key={index}
-                  className="glass rounded-xl p-6 border border-green-500/20 hover:border-green-500/40 transition"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold text-white">{product.name}</h3>
-                    <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">
-                      {product.category}
-                    </span>
-                  </div>
-                  
-                  <p className="text-green-200 text-sm mb-4 line-clamp-2">
-                    {product.description}
-                  </p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-300 text-sm">Price:</span>
-                      <div className="flex items-center gap-2">
-                        {product.originalPrice && (
-                          <span className="text-green-400 text-sm line-through">
-                            Rs. {product.originalPrice}
-                          </span>
-                        )}
-                        <span className="text-white font-bold text-lg">
-                          Rs. {product.price}
-                        </span>
-                      </div>
+                <div key={`${product.url}-${index}`} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-semibold text-gray-900">{product.title}</p>
+                      <p className="text-sm text-gray-500">{product.category}</p>
                     </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-300 text-sm">Stock:</span>
-                      <span className="text-white font-semibold">
-                        {product.stock} units
-                      </span>
+                    <div className="text-right">
+                      {product.originalPrice && (
+                        <p className="text-sm text-gray-400 line-through">Rs. {product.originalPrice}</p>
+                      )}
+                      <p className="text-xl font-bold text-gray-900">Rs. {product.price}</p>
+                      {product.stock !== undefined && (
+                        <p className="text-xs text-gray-500">Stock: {product.stock}</p>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="mb-4">
-                    <p className="text-green-300 text-xs mb-1">ChiltanPure URL:</p>
-                    <a 
-                      href={product.chiltanpureUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-400 hover:text-green-300 text-xs break-all underline"
-                    >
-                      {product.chiltanpureUrl}
-                    </a>
-                  </div>
-                  
-                  <a 
-                    href={product.chiltanpureUrl}
+
+                  <p className="text-sm text-gray-700 line-clamp-3">{product.description}</p>
+
+                  <a
+                    href={product.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-green-500/20 text-green-300 px-4 py-2 rounded-lg hover:bg-green-500/30 transition font-semibold text-center block"
+                    className="text-sm text-blue-600 hover:text-blue-700 underline break-all"
                   >
-                    🔗 View on ChiltanPure
+                    {product.url}
                   </a>
                 </div>
               ))}
             </div>
-
-            {syncResult.errors.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold text-red-600 mb-2">Errors</h3>
-                <ul className="list-disc list-inside text-red-600">
-                  {syncResult.errors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         )}
 
-        {/* Information Panel */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
-          <h3 className="text-xl font-semibold mb-4">About Catalog Sync</h3>
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white space-y-3">
+          <h3 className="text-xl font-semibold">About Catalog Sync</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-2">What gets synchronized:</h4>
               <ul className="text-sm space-y-1">
                 <li>• Product names and descriptions</li>
-                <li>• Pricing information</li>
-                <li>• Product images</li>
-                <li>• Categories and tags</li>
-                <li>• Stock availability</li>
+                <li>• Pricing and discounts</li>
+                <li>• Images and categories</li>
+                <li>• Stock levels</li>
+                <li>• Variants where available</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Sync behavior:</h4>
+              <h4 className="font-semibold mb-2">Behavior:</h4>
               <ul className="text-sm space-y-1">
-                <li>• New products are added automatically</li>
+                <li>• New products are added</li>
                 <li>• Existing products are updated</li>
-                <li>• Removed products stay in catalog</li>
-                <li>• No products are deleted automatically</li>
+                <li>• Data is pulled from the live ChiltanPure catalog</li>
+                <li>• Use preview first, then import</li>
               </ul>
             </div>
           </div>
         </div>
       </div>
     </AdminLayout>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: number; accent: string }) {
+  return (
+    <div className="p-3 rounded-lg bg-gray-100">
+      <p className={`text-2xl font-bold ${accent}`}>{value}</p>
+      <p className="text-sm text-gray-600">{label}</p>
+    </div>
   );
 }
