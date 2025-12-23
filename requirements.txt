@@ -1,0 +1,12 @@
+# Python Products Scraper Dependencies
+
+# Web scraping and automation
+selenium>=4.15.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# HTTP requests (optional, for non-JS pages)
+requests>=2.31.0
+
+# WebDriver manager (optional, for automatic driver installation)
+webdriver-manager>=4.0.0
