@@ -33,10 +33,19 @@ try:
         StaleElementReferenceException
     )
     from bs4 import BeautifulSoup
-except ImportError:
-    print("Error: Required packages not installed.")
-    print("Please install dependencies using: pip install -r requirements.txt")
-    sys.exit(1)
+    DEPENDENCIES_INSTALLED = True
+except ImportError as e:
+    DEPENDENCIES_INSTALLED = False
+    _import_error = e
+    # Only exit if running as main script
+    if __name__ == '__main__':
+        print("Error: Required packages not installed.")
+        print("Please install dependencies using: pip install -r requirements.txt")
+        print(f"Missing: {e}")
+        sys.exit(1)
+    # For imports, define placeholder classes
+    webdriver = None
+    BeautifulSoup = None
 
 
 # Configure logging
@@ -59,6 +68,12 @@ class ProductsScraper:
             headless: Whether to run browser in headless mode
             timeout: Default timeout for waiting for elements
         """
+        if not DEPENDENCIES_INSTALLED:
+            raise ImportError(
+                "Required dependencies not installed. "
+                "Please run: pip install -r requirements.txt"
+            )
+        
         self.base_url = base_url
         self.timeout = timeout
         self.product_urls = set()
