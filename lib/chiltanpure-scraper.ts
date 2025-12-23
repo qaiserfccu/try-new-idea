@@ -1,3 +1,4 @@
+import { chromium, Browser, Page } from 'playwright';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
@@ -23,12 +24,32 @@ export interface ProductVariant {
 
 export class ChiltanPureScraper {
   private baseUrl = 'https://chiltanpure.com';
+  private browser: Browser | null = null;
+  private page: Page | null = null;
+
+  async initBrowser() {
+    if (!this.browser) {
+      this.browser = await chromium.launch({ headless: true });
+      const context = await this.browser.newContext({
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      });
+      this.page = await context.newPage();
+    }
+  }
+
+  async closeBrowser() {
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+      this.page = null;
+    }
+  }
 
   async scrapeAllProducts(): Promise<ScrapedProduct[]> {
     try {
       console.log('Starting ChiltanPure catalog scraping...');
 
-      // First, get all product URLs from the main catalog
+      // First, get all product URLs from sitemap (no browser needed)
       const productUrls = await this.getAllProductUrls();
 
       console.log(`Found ${productUrls.length} products to scrape`);
@@ -37,9 +58,12 @@ export class ChiltanPureScraper {
         throw new Error('No product URLs found - website structure may have changed');
       }
 
+      // Initialize browser only when needed for individual product scraping
+      await this.initBrowser();
+
       const products: ScrapedProduct[] = [];
 
-      for (const url of productUrls) {
+      for (const url of productUrls.slice(0, 10)) { // Limit to first 10 for testing
         try {
           const product = await this.scrapeProduct(url);
           if (product) {
@@ -49,8 +73,8 @@ export class ChiltanPureScraper {
           console.error('Error scraping product:', url, error);
         }
 
-        // Be polite to the source site
-        await this.delay(300);
+        // Be polite to the source site - longer delay for headless browser
+        await this.delay(2000);
       }
 
       console.log(`Successfully scraped ${products.length} products`);
@@ -59,72 +83,81 @@ export class ChiltanPureScraper {
     } catch (error) {
       console.error('Error scraping ChiltanPure catalog:', error);
       throw error;
+    } finally {
+      await this.closeBrowser();
     }
   }
 
   private async getAllProductUrls(): Promise<string[]> {
-    const urls: string[] = [];
-
     try {
-      // Get main catalog page
-      const response = await axios.get(`${this.baseUrl}/collections/all`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
+      console.log('Fetching product URLs from sitemap...');
 
-      const $ = cheerio.load(response.data);
+      // Get the main sitemap
+      const sitemapResponse = await axios.get(`${this.baseUrl}/sitemap.xml`);
+      const sitemapData = sitemapResponse.data;
 
-      // Extract product URLs from the catalog page
-      $('.product-item a, .product-card a, .grid-item a').each((_, element) => {
-        const href = $(element).attr('href');
-        if (href && href.includes('/products/') && !urls.includes(href)) {
-          urls.push(href.startsWith('http') ? href : `${this.baseUrl}${href}`);
-        }
-      });
+      // Parse the sitemap to find product sitemap URLs
+      const productSitemapUrls: string[] = [];
+      const urlRegex = /<loc>(https:\/\/chiltanpure\.com\/sitemap_products_\d+\.xml[^<]*)<\/loc>/g;
+      let match;
+      while ((match = urlRegex.exec(sitemapData)) !== null) {
+        productSitemapUrls.push(match[1]);
+      }
 
-      // Also try to get products from category pages
-      const categories = await this.getCategories();
-      for (const category of categories) {
+      console.log(`Found ${productSitemapUrls.length} product sitemap files`);
+
+      const allProductUrls: string[] = [];
+
+      // Fetch each product sitemap
+      for (const sitemapUrl of productSitemapUrls) {
         try {
-          const categoryUrls = await this.getProductsFromCategory(category.url);
-          urls.push(...categoryUrls.filter(url => !urls.includes(url)));
+          const response = await axios.get(sitemapUrl);
+          const productUrls: string[] = [];
+
+          // Extract product URLs from the sitemap
+          const productUrlRegex = /<loc>(https:\/\/chiltanpure\.com\/products\/[^<]+)<\/loc>/g;
+          let productMatch;
+          while ((productMatch = productUrlRegex.exec(response.data)) !== null) {
+            productUrls.push(productMatch[1]);
+          }
+
+          allProductUrls.push(...productUrls);
+          console.log(`Found ${productUrls.length} products in ${sitemapUrl}`);
         } catch (error) {
-          console.error(`Error getting products from category ${category.name}:`, error);
+          console.error(`Error fetching sitemap ${sitemapUrl}:`, error);
         }
       }
 
-    } catch (error) {
-      console.error('Error getting product URLs:', error);
-    }
+      console.log(`Total product URLs found: ${allProductUrls.length}`);
+      return allProductUrls;
 
-    return [...new Set(urls)]; // Remove duplicates
+    } catch (error) {
+      console.error('Error fetching product URLs from sitemap:', error);
+      throw error;
+    }
   }
 
   private async getCategories(): Promise<{name: string, url: string}[]> {
+    if (!this.page) throw new Error('Browser not initialized');
+
     const categories: {name: string, url: string}[] = [];
 
     try {
-      const response = await axios.get(this.baseUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+      await this.page.goto(this.baseUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await this.page.waitForTimeout(1000);
+
+      const categoryData = await this.page.$$eval('.nav-item a, .menu-item a, .collection-link a', (links) => {
+        return links.map(link => {
+          const href = link.getAttribute('href');
+          const name = link.textContent?.trim();
+          return { href, name };
+        }).filter(item => item.href && item.href.includes('/collections/') && item.name && !item.name.includes('All'));
       });
 
-      const $ = cheerio.load(response.data);
-
-      // Extract categories from navigation
-      $('.nav-item a, .menu-item a, .collection-link a').each((_, element) => {
-        const href = $(element).attr('href');
-        const name = $(element).text().trim();
-
-        if (href && href.includes('/collections/') && name && !name.includes('All')) {
-          categories.push({
-            name,
-            url: href.startsWith('http') ? href : `${this.baseUrl}${href}`
-          });
-        }
-      });
+      categories.push(...categoryData.map(item => ({
+        name: item.name!,
+        url: item.href!.startsWith('http') ? item.href! : `${this.baseUrl}${item.href}`
+      })));
 
     } catch (error) {
       console.error('Error getting categories:', error);
@@ -134,23 +167,19 @@ export class ChiltanPureScraper {
   }
 
   private async getProductsFromCategory(categoryUrl: string): Promise<string[]> {
+    if (!this.page) throw new Error('Browser not initialized');
+
     const urls: string[] = [];
 
     try {
-      const response = await axios.get(categoryUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+      await this.page.goto(categoryUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await this.page.waitForTimeout(1000);
+
+      const productLinks = await this.page.$$eval('.product-item a, .product-card a', (links) => {
+        return links.map(link => link.getAttribute('href')).filter(href => href && href.includes('/products/'));
       });
 
-      const $ = cheerio.load(response.data);
-
-      $('.product-item a, .product-card a').each((_, element) => {
-        const href = $(element).attr('href');
-        if (href && href.includes('/products/')) {
-          urls.push(href.startsWith('http') ? href : `${this.baseUrl}${href}`);
-        }
-      });
+      urls.push(...productLinks.map(href => href!.startsWith('http') ? href! : `${this.baseUrl}${href}`));
 
     } catch (error) {
       console.error(`Error getting products from ${categoryUrl}:`, error);
@@ -160,148 +189,174 @@ export class ChiltanPureScraper {
   }
 
   private async scrapeProduct(url: string): Promise<ScrapedProduct | null> {
+    if (!this.page) throw new Error('Browser not initialized');
+
     try {
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+      // Wait a bit for dynamic content to load
+      await this.page.waitForTimeout(2000);
+
+      // Extract data using page.evaluate for better reliability
+      const productData = await this.page.evaluate(() => {
+        // Helper function to extract price
+        const extractPrice = (text: string): number => {
+          const cleaned = text.replace(/[^\d.,]/g, '');
+          const number = parseFloat(cleaned.replace(',', ''));
+          return isNaN(number) ? 0 : number;
+        };
+
+        // Extract title
+        const titleSelectors = ['h1', '.product-title', '.product__title'];
+        let title = '';
+        for (const selector of titleSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent?.trim()) {
+            title = element.textContent.trim();
+            break;
+          }
         }
+        if (!title) {
+          const titleTag = document.querySelector('title');
+          if (titleTag) {
+            title = titleTag.textContent?.replace('Buy ', '').replace(' at Best Price in Pakistan - ChiltanPure VisaMastercard', '') || '';
+          }
+        }
+
+        // Extract description
+        const descSelectors = ['.product-description', '.product__description', '.product-details'];
+        let description = '';
+        for (const selector of descSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent?.trim()) {
+            description = element.textContent.trim();
+            break;
+          }
+        }
+
+        // Extract price
+        const priceSelectors = ['.price', '.product-price', '.current-price', '[data-price]'];
+        let price = 0;
+        for (const selector of priceSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent) {
+            const extracted = extractPrice(element.textContent.trim());
+            if (extracted > 0) {
+              price = extracted;
+              break;
+            }
+          }
+        }
+
+        // Extract original price
+        const originalPriceSelectors = ['.original-price', '.compare-price', '.was-price'];
+        let originalPrice: number | undefined;
+        for (const selector of originalPriceSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent) {
+            const extracted = extractPrice(element.textContent.trim());
+            if (extracted > 0) {
+              originalPrice = extracted;
+              break;
+            }
+          }
+        }
+
+        // Extract images
+        const images: string[] = [];
+        const imageSelectors = ['.product-image img', '.product-gallery img', '.product-photos img'];
+        for (const selector of imageSelectors) {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(img => {
+            const src = (img as HTMLImageElement).src || (img as HTMLImageElement).getAttribute('data-src');
+            if (src && !src.includes('placeholder') && !src.includes('no-image')) {
+              images.push(src);
+            }
+          });
+          if (images.length > 0) break;
+        }
+
+        // Extract category
+        let category = 'General';
+        const breadcrumbLinks = document.querySelectorAll('.breadcrumb a, .breadcrumbs a');
+        if (breadcrumbLinks.length > 0) {
+          const lastBreadcrumb = breadcrumbLinks[breadcrumbLinks.length - 1];
+          if (lastBreadcrumb.textContent?.trim() && lastBreadcrumb.textContent.trim() !== 'Home') {
+            category = lastBreadcrumb.textContent.trim();
+          }
+        }
+
+        // Extract variants
+        const variants: any[] = [];
+        const variantSelectors = ['.variant-option', '.product-option', '.size-selector', '.variant-selector'];
+        for (const selector of variantSelectors) {
+          const container = document.querySelector(selector);
+          if (container) {
+            const options = container.querySelectorAll('option, input[type="radio"], button');
+            const name = container.getAttribute('data-option-name') ||
+                        container.previousElementSibling?.textContent?.trim() || 'Variant';
+
+            options.forEach(option => {
+              const value = (option as any).value || option.textContent?.trim();
+              if (value && value !== 'Select' && value !== 'Choose') {
+                variants.push({ name, value });
+              }
+            });
+          }
+        }
+
+        // Extract stock
+        let stock: number | undefined;
+        const stockSelectors = ['.stock', '.availability', '.product-stock'];
+        for (const selector of stockSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent) {
+            const match = element.textContent.match(/(\d+)/);
+            if (match) {
+              stock = parseInt(match[1]);
+              break;
+            }
+          }
+        }
+
+        // Extract SKU
+        const skuSelectors = ['[data-sku]', '.sku'];
+        let sku: string | undefined;
+        for (const selector of skuSelectors) {
+          const element = document.querySelector(selector);
+          if (element?.textContent?.trim()) {
+            sku = element.textContent.trim();
+            break;
+          }
+        }
+
+        return {
+          title,
+          description,
+          price,
+          originalPrice,
+          images,
+          category,
+          variants,
+          stock,
+          sku
+        };
       });
 
-      const $ = cheerio.load(response.data);
-
-      // Extract product title
-      const title = $('h1').first().text().trim() ||
-                   $('.product-title').first().text().trim() ||
-                   $('.product__title').first().text().trim() ||
-                   $('title').text().trim().replace('Buy ', '').replace(' at Best Price in Pakistan - ChiltanPure VisaMastercard', '');
-
-      // Extract description
-      const description = $('.product-description, .product__description, .product-details').first().text().trim();
-
-      // Extract price - try multiple selectors and take the first valid price
-      const priceSelectors = $('.price, .product-price, .current-price, [data-price]');
-      let price = 0;
-      for (let i = 0; i < priceSelectors.length; i++) {
-        const priceText = $(priceSelectors[i]).text().trim();
-        const extractedPrice = this.extractPrice(priceText);
-        if (extractedPrice > 0) {
-          price = extractedPrice;
-          break;
-        }
-      }
-
-      // Extract original price (if on sale)
-      const originalPriceText = $('.original-price, .compare-price, .was-price').first().text().trim();
-      const originalPrice = originalPriceText ? this.extractPrice(originalPriceText) : undefined;
-
-      // Extract images
-      const images: string[] = [];
-      $('.product-image img, .product-gallery img, .product-photos img').each((_, element) => {
-        const src = $(element).attr('src') || $(element).attr('data-src');
-        if (src && !src.includes('placeholder') && !src.includes('no-image')) {
-          const fullUrl = src.startsWith('http') ? src : src.startsWith('//') ? `https:${src}` : `${this.baseUrl}${src}`;
-          images.push(fullUrl);
-        }
-      });
-
-      // Extract category from breadcrumbs or meta
-      const category = this.extractCategory($);
-
-      // Extract variants
-      const variants = this.extractVariants($);
-
-      // Extract stock information
-      const stockText = $('.stock, .availability, .product-stock').first().text().trim();
-      const stock = this.extractStock(stockText);
-
-      // Extract SKU
-      const sku = $('[data-sku], .sku').first().text().trim() || undefined;
-
-      if (!title || !price) {
+      if (!productData.title || !productData.price) {
         console.warn(`Skipping product ${url} - missing title or price`);
         return null;
       }
 
       return {
-        title,
-        description: description || '',
-        price,
-        originalPrice,
-        images: images.length > 0 ? images : [],
-        category: category || 'General',
-        variants,
-        url,
-        stock,
-        sku
+        ...productData,
+        url
       };
 
     } catch (error) {
       console.error(`Error scraping product ${url}:`, error);
       return null;
     }
-  }
-
-  private extractPrice(priceText: string): number {
-    // Remove currency symbols and extract numbers
-    const cleaned = priceText.replace(/[^\d.,]/g, '');
-    const number = parseFloat(cleaned.replace(',', ''));
-    return isNaN(number) ? 0 : number;
-  }
-
-  private extractCategory($: cheerio.CheerioAPI): string {
-    // Try breadcrumbs first
-    const breadcrumb = $('.breadcrumb a, .breadcrumbs a').last().text().trim();
-    if (breadcrumb && breadcrumb !== 'Home') {
-      return breadcrumb;
-    }
-
-    // Try meta tags
-    const metaCategory = $('meta[property="product:category"]').attr('content');
-    if (metaCategory) {
-      return metaCategory;
-    }
-
-    // Try URL structure
-    const url = $('link[rel="canonical"]').attr('href') || '';
-    const urlMatch = url.match(/\/collections\/([^\/]+)/);
-    if (urlMatch) {
-      return urlMatch[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
-
-    return 'General';
-  }
-
-  private extractVariants($: cheerio.CheerioAPI): ProductVariant[] {
-    const variants: ProductVariant[] = [];
-
-    // Look for variant selectors
-    $('.variant-option, .product-option, .size-selector, .variant-selector').each((_, element) => {
-      const $el = $(element);
-      const name = $el.attr('data-option-name') || $el.prev('label').text().trim() || 'Variant';
-
-      $el.find('option, input, button').each((_, option) => {
-        const $option = $(option);
-        const value = $option.attr('value') || $option.text().trim();
-
-        if (value && value !== 'Select' && value !== 'Choose') {
-          variants.push({
-            name,
-            value,
-            price: undefined, // Could be extracted if variant has different pricing
-            stock: undefined
-          });
-        }
-      });
-    });
-
-    return variants;
-  }
-
-  private extractStock(stockText: string): number | undefined {
-    if (!stockText) return undefined;
-
-    const match = stockText.match(/(\d+)/);
-    return match ? parseInt(match[1]) : undefined;
   }
 
   private delay(ms: number): Promise<void> {

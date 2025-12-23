@@ -69,6 +69,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   🔄 Catalog Sync
                 </Link>
                 <Link
+                  href="/admin/import"
+                  className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
+                >
+                  📤 Import CSV
+                </Link>
+                <Link
                   href="/admin/users"
                   className="block px-4 py-3 rounded-lg text-green-200 hover:bg-green-500/10 hover:text-white transition font-medium"
                 >
